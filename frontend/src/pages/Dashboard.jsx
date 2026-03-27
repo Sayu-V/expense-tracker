@@ -1,231 +1,292 @@
 /**
  * pages/Dashboard.jsx
  * --------------------
- * Main dashboard with data widgets:
- *   1. Finance Quote of the Day      (v1.1.0)
- *   2. Total Spend / Income / Net Balance metric cards  (v1.1.0 extended)
- *   3. Transactions / Avg per Expense / Categories Used
- *   4. Spend by Category (Pie chart)
- *   5. Monthly Trend (Line chart)
- *   6. Budget vs Actual (Horizontal bar chart)
- *   7. Recent Expenses (table — shows type badge)
- *   8. AI Insights panel
+ * v1.3.0:
+ *   - Period-aware: all API calls use dateFrom/dateTo from PeriodContext
+ *   - Drill-down: click pie slice, bar, or "Recent Expenses" → /expenses with pre-filters
+ *   - Income line on Trend chart
+ *   - Quote of the Day
+ *   - Income / Net Balance cards
  */
 
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
   BarChart, Bar,
 } from 'recharts'
 import { reportsApi, budgetsApi, expensesApi, insightsApi } from '../api/index'
+import { usePeriod } from '../context/PeriodContext'
 import { getRandomQuote } from '../data/quotes'
 
-const SEVERITY_CLASS = {
-  info: 'severity-info',
-  warning: 'severity-warning',
-  alert: 'severity-alert',
-}
-
-const SEVERITY_ICON = { info: 'ℹ️', warning: '⚠️', alert: '🚨' }
+const SEVERITY_ICON  = { info: 'ℹ️', warning: '⚠️', alert: '🚨' }
+const SEVERITY_CLASS = { info: 'severity-info', warning: 'severity-warning', alert: 'severity-alert' }
 
 export default function Dashboard() {
-  const [summary, setSummary] = useState(null)
-  const [prevSummary, setPrevSummary] = useState(null)
-  const [breakdown, setBreakdown] = useState([])
-  const [trend, setTrend] = useState([])
-  const [budgetStatus, setBudgetStatus] = useState([])
-  const [recentExpenses, setRecentExpenses] = useState([])
-  const [insights, setInsights] = useState([])
-  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const { period } = usePeriod()
 
-  // v1.1.0: Quote of the day — picked once on mount
+  const [summary,        setSummary]        = useState(null)
+  const [prevSummary,    setPrevSummary]     = useState(null)
+  const [breakdown,      setBreakdown]       = useState([])
+  const [trend,          setTrend]           = useState([])
+  const [budgetStatus,   setBudgetStatus]    = useState([])
+  const [recentExpenses, setRecentExpenses]  = useState([])
+  const [insights,       setInsights]        = useState([])
+  const [loading,        setLoading]         = useState(true)
+
+  // Quote — stable for the lifetime of this mount
   const [quote] = useState(() => getRandomQuote())
 
+  // ── Data fetch — re-runs every time the period changes ────────────────────
   useEffect(() => {
-    const now = new Date()
-    const month = now.getMonth() + 1
-    const year = now.getFullYear()
-    const prevMonth = month === 1 ? 12 : month - 1
-    const prevYear = month === 1 ? year - 1 : year
+    setLoading(true)
+
+    // Previous period: shift by one period-width back
+    // For display purposes we use the month before date_from
+    const prevDate = new Date(period.dateFrom)
+    prevDate.setDate(prevDate.getDate() - 1)  // day before current period start
+    const prevMonthDate = new Date(prevDate.getFullYear(), prevDate.getMonth(), 1)
+    const prevMonth = prevMonthDate.getMonth() + 1
+    const prevYear  = prevMonthDate.getFullYear()
 
     Promise.all([
-      reportsApi.monthlySummary({ month, year }),
+      reportsApi.monthlySummary({ date_from: period.dateFrom, date_to: period.dateTo, period_label: period.label }),
       reportsApi.monthlySummary({ month: prevMonth, year: prevYear }),
-      reportsApi.byCategory({ month, year }),
+      reportsApi.byCategory({ date_from: period.dateFrom, date_to: period.dateTo }),
       reportsApi.trend({ months: 6 }),
-      budgetsApi.status({ month, year }),
-      expensesApi.list({ limit: 10 }),
+      budgetsApi.status({ month: period.month, year: period.year }),
+      expensesApi.list({ date_from: period.dateFrom, date_to: period.dateTo, limit: 10 }),
       insightsApi.list(),
-    ]).then(([sum, prevSum, cat, tr, budget, recent, ins]) => {
-      setSummary(sum.data)
-      setPrevSummary(prevSum.data)
-      setBreakdown(cat.data)
-      setTrend(tr.data)
-      setBudgetStatus(budget.data)
-      setRecentExpenses(recent.data)
-      setInsights(ins.data)
-      setLoading(false)
-    }).catch(() => setLoading(false))
-  }, [])
+    ])
+      .then(([sum, prevSum, cat, tr, budget, recent, ins]) => {
+        setSummary(sum.data)
+        setPrevSummary(prevSum.data)
+        setBreakdown(cat.data)
+        setTrend(tr.data)
+        setBudgetStatus(budget.data)
+        setRecentExpenses(recent.data)
+        setInsights(ins.data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [period.dateFrom, period.dateTo])
 
-  // Month-over-month % change (expenses only)
+  // ── Drill-down helpers ────────────────────────────────────────────────────
+  const drillToCategory = (categoryId) => {
+    navigate(`/expenses?category_id=${categoryId}&date_from=${period.dateFrom}&date_to=${period.dateTo}`)
+  }
+
+  const drillToAll = () => {
+    navigate(`/expenses?date_from=${period.dateFrom}&date_to=${period.dateTo}`)
+  }
+
+  const drillToExpenses = () => {
+    navigate(`/expenses?date_from=${period.dateFrom}&date_to=${period.dateTo}&type=expense`)
+  }
+
+  const drillToIncome = () => {
+    navigate(`/expenses?date_from=${period.dateFrom}&date_to=${period.dateTo}&type=income`)
+  }
+
+  // MoM % change
   const momChange = summary && prevSummary && prevSummary.total_spend > 0
     ? (((summary.total_spend - prevSummary.total_spend) / prevSummary.total_spend) * 100).toFixed(1)
     : null
 
-  if (loading) {
-    return <div style={{ padding: '3rem', color: '#888' }}>Loading dashboard...</div>
-  }
-
-  // Net balance colour
   const netBalance = summary?.net_balance ?? 0
-  const netColor = netBalance >= 0 ? '#16a34a' : '#dc2626'
-  const netIcon = netBalance >= 0 ? '▲' : '▼'
+  const netColor   = netBalance >= 0 ? 'var(--color-green)' : 'var(--color-red)'
+  const netIcon    = netBalance >= 0 ? '▲' : '▼'
+
+  if (loading) return <div className="loading">Loading dashboard…</div>
 
   return (
     <div>
       <h1 className="page-title">Dashboard</h1>
 
       {/* ── Quote of the Day ── */}
-      <div style={{
-        marginBottom: '1.5rem',
-        padding: '1rem 1.25rem',
-        background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)',
-        borderRadius: '12px',
-        borderLeft: '4px solid #6366f1',
-        display: 'flex',
-        gap: '0.75rem',
-        alignItems: 'flex-start',
-      }}>
+      <div className="quote-card">
         <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>💬</span>
         <div>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#374151', fontStyle: 'italic', lineHeight: 1.5 }}>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-primary)', fontStyle: 'italic', lineHeight: 1.55 }}>
             "{quote.text}"
           </p>
-          <p style={{ margin: '0.3rem 0 0', fontSize: '0.78rem', color: '#6366f1', fontWeight: 600 }}>
+          <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}>
             — {quote.author}
           </p>
         </div>
       </div>
 
       {/* ── Row 1: Metric cards ── */}
-      <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        {/* Total Spend */}
-        <div className="card">
+      <div className="grid-4" style={{ marginBottom: '1.25rem' }}>
+        {/* Total Spend — clickable drill-down */}
+        <div className="card" style={{ cursor: 'pointer' }} onClick={drillToExpenses}
+          title="Click to view all expenses for this period">
           <div className="metric-label">Total Spend</div>
-          <div className="metric-value" style={{ color: '#dc2626' }}>
+          <div className="metric-value" style={{ color: 'var(--color-red)' }}>
             ₹{summary?.total_spend?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) ?? '—'}
           </div>
           {momChange !== null && (
-            <div className="metric-sub" style={{ color: momChange > 0 ? '#dc2626' : '#16a34a' }}>
-              {momChange > 0 ? '▲' : '▼'} {Math.abs(momChange)}% vs last month
+            <div className="metric-sub" style={{ color: parseFloat(momChange) > 0 ? 'var(--color-red)' : 'var(--color-green)' }}>
+              {parseFloat(momChange) > 0 ? '▲' : '▼'} {Math.abs(momChange)}% vs prev period
             </div>
           )}
+          <div className="metric-sub" style={{ marginTop: '0.35rem', color: 'var(--accent)', fontSize: '0.72rem' }}>
+            Tap to drill down →
+          </div>
         </div>
 
-        {/* Total Income (v1.1.0) */}
-        <div className="card">
+        {/* Total Income — clickable */}
+        <div className="card" style={{ cursor: 'pointer' }} onClick={drillToIncome}
+          title="Click to view all income for this period">
           <div className="metric-label">Total Income</div>
-          <div className="metric-value" style={{ color: '#16a34a' }}>
+          <div className="metric-value" style={{ color: 'var(--color-green)' }}>
             ₹{summary?.total_income?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) ?? '—'}
           </div>
-          <div className="metric-sub">This month</div>
+          <div className="metric-sub">This {period.type}</div>
+          <div className="metric-sub" style={{ marginTop: '0.35rem', color: 'var(--accent)', fontSize: '0.72rem' }}>
+            Tap to drill down →
+          </div>
         </div>
 
-        {/* Net Balance (v1.1.0) */}
+        {/* Net Balance */}
         <div className="card">
           <div className="metric-label">Net Balance</div>
           <div className="metric-value" style={{ color: netColor }}>
             {netIcon} ₹{Math.abs(netBalance).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
           </div>
           <div className="metric-sub" style={{ color: netColor }}>
-            {netBalance >= 0 ? 'In surplus' : 'Overspent'}
+            {netBalance >= 0 ? 'Surplus' : 'Overspent'}
           </div>
         </div>
 
         {/* Transactions */}
-        <div className="card">
+        <div className="card" style={{ cursor: 'pointer' }} onClick={drillToAll}
+          title="Click to see all entries">
           <div className="metric-label">Transactions</div>
           <div className="metric-value">{summary?.expense_count ?? '—'}</div>
-          <div className="metric-sub">Expenses this month</div>
+          <div className="metric-sub">Avg ₹{summary?.avg_expense?.toFixed(0) ?? '—'} / entry</div>
+          <div className="metric-sub" style={{ marginTop: '0.35rem', color: 'var(--accent)', fontSize: '0.72rem' }}>
+            Tap to drill down →
+          </div>
         </div>
       </div>
 
-      {/* ── Row 1b: secondary metric cards ── */}
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-        <div className="card">
-          <div className="metric-label">Avg per Expense</div>
-          <div className="metric-value">₹{summary?.avg_expense?.toFixed(0) ?? '—'}</div>
-          <div className="metric-sub">This month</div>
-        </div>
-        <div className="card">
-          <div className="metric-label">Categories Used</div>
-          <div className="metric-value">{breakdown.length}</div>
-          <div className="metric-sub">This month</div>
-        </div>
-      </div>
+      {/* ── Row 2: Charts ── */}
+      <div className="grid-2" style={{ marginBottom: '1.25rem' }}>
 
-      {/* ── Row 2: Pie + Line ── */}
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
+        {/* Pie — each slice is clickable */}
         <div className="card">
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Spend by Category</h3>
+          <div className="section-title">
+            Spend by Category
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', fontWeight: 400, marginLeft: '0.5rem' }}>
+              click a slice to drill down
+            </span>
+          </div>
           {breakdown.length === 0 ? (
-            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>No expenses this month.</p>
+            <div className="empty-state">
+              <div className="empty-state-icon">📭</div>
+              No expenses in this period.
+            </div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={230}>
               <PieChart>
-                <Pie data={breakdown} dataKey="total" nameKey="category_name" cx="50%" cy="50%" outerRadius={85} label={({ category_name, percentage }) => `${category_name} ${percentage}%`}>
+                <Pie
+                  data={breakdown}
+                  dataKey="total"
+                  nameKey="category_name"
+                  cx="50%" cy="50%"
+                  outerRadius={88}
+                  cursor="pointer"
+                  onClick={(entry) => drillToCategory(entry.category_id)}
+                  label={({ category_name, percentage }) => `${category_name} ${percentage}%`}
+                  labelLine={{ stroke: 'var(--text-tertiary)' }}
+                >
                   {breakdown.map((entry) => (
                     <Cell key={entry.category_id} fill={entry.category_color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
+                <Tooltip
+                  formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
+                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
         </div>
 
+        {/* Trend line — income + expense */}
         <div className="card">
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Monthly Trend (6 months)</h3>
-          <ResponsiveContainer width="100%" height={220}>
+          <div className="section-title">Monthly Trend (6 months)</div>
+          <ResponsiveContainer width="100%" height={230}>
             <LineChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
-              <Legend />
-              <Line type="monotone" dataKey="total" name="Expenses" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="income" name="Income" stroke="#16a34a" strokeWidth={2} dot={{ r: 4 }} strokeDasharray="5 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+              <Tooltip
+                formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
+                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
+              />
+              <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
+              <Line type="monotone" dataKey="total"  name="Expenses" stroke="var(--color-red)"   strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="income" name="Income"   stroke="var(--color-green)" strokeWidth={2} dot={{ r: 4 }} strokeDasharray="5 3" />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* ── Row 3: Budget vs Actual ── */}
+      {/* ── Row 3: Budget vs Actual — bars are clickable ── */}
       {budgetStatus.length > 0 && (
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Budget vs Actual</h3>
+        <div className="card" style={{ marginBottom: '1.25rem' }}>
+          <div className="section-title">
+            Budget vs Actual
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', fontWeight: 400, marginLeft: '0.5rem' }}>
+              click a bar to drill down to that category
+            </span>
+          </div>
           <ResponsiveContainer width="100%" height={budgetStatus.length * 52 + 40}>
-            <BarChart layout="vertical" data={budgetStatus} margin={{ left: 80 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis type="number" tickFormatter={(v) => `₹${v.toLocaleString('en-IN')}`} tick={{ fontSize: 11 }} />
-              <YAxis type="category" dataKey="category_name" tick={{ fontSize: 12 }} width={75} />
-              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
-              <Legend />
-              <Bar dataKey="budgeted" name="Budget" fill="#e0e7ff" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="actual" name="Actual" fill="#6366f1" radius={[0, 4, 4, 0]} />
+            <BarChart
+              layout="vertical"
+              data={budgetStatus}
+              margin={{ left: 80 }}
+              onClick={(data) => {
+                if (data?.activePayload?.[0]) {
+                  drillToCategory(data.activePayload[0].payload.category_id)
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis type="number" tickFormatter={(v) => `₹${v.toLocaleString('en-IN')}`} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+              <YAxis type="category" dataKey="category_name" tick={{ fontSize: 12, fill: 'var(--text-primary)' }} width={75} />
+              <Tooltip
+                formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
+                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
+              />
+              <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
+              <Bar dataKey="budgeted" name="Budget" fill="var(--accent-light)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="actual"   name="Actual" fill="var(--accent)"       radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* ── Row 4: Recent expenses + Insights ── */}
+      {/* ── Row 4: Recent Expenses + Insights ── */}
       <div className="grid-2">
         <div className="card">
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Recent Expenses</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <span className="section-title" style={{ margin: 0 }}>Recent Entries</span>
+            <button className="btn-icon" onClick={drillToAll} style={{ fontSize: '0.78rem', padding: '0.3rem 0.75rem' }}>
+              View all →
+            </button>
+          </div>
+
           {recentExpenses.length === 0 ? (
-            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>No expenses yet.</p>
+            <div className="empty-state">
+              <div className="empty-state-icon">📭</div>
+              No entries in this period.
+            </div>
           ) : (
             <table>
               <thead>
@@ -237,25 +298,24 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentExpenses.slice(0, 10).map((e) => (
-                  <tr key={e.id}>
-                    <td style={{ color: '#888', fontSize: '0.8rem' }}>{e.date}</td>
+                {recentExpenses.slice(0, 8).map((e) => (
+                  <tr key={e.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => drillToCategory(e.category_id)}
+                    title="Click to see all entries in this category">
+                    <td style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{e.date}</td>
                     <td>
                       {e.type === 'income' && (
-                        <span style={{
-                          fontSize: '0.68rem', fontWeight: 700, background: '#dcfce7',
-                          color: '#16a34a', borderRadius: '4px', padding: '1px 5px',
-                          marginRight: '5px', verticalAlign: 'middle',
-                        }}>IN</span>
+                        <span className="badge badge-income" style={{ marginRight: '5px', fontSize: '0.65rem' }}>IN</span>
                       )}
                       {e.description}
                     </td>
                     <td>
                       <span className="badge" style={{ background: e.category?.color + '22', color: e.category?.color }}>
-                        {e.category?.emoji ?? ''} {e.category?.name ?? '—'}
+                        {e.category?.emoji} {e.category?.name ?? '—'}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 600, color: e.type === 'income' ? '#16a34a' : 'inherit' }}>
+                    <td style={{ textAlign: 'right', fontWeight: 700, color: e.type === 'income' ? 'var(--color-green)' : 'var(--text-primary)' }}>
                       {e.type === 'income' ? '+' : ''}₹{e.amount.toLocaleString('en-IN')}
                     </td>
                   </tr>
@@ -266,25 +326,32 @@ export default function Dashboard() {
         </div>
 
         <div className="card">
-          <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>AI Insights</h3>
+          <div className="section-title">AI Insights</div>
           {insights.length === 0 ? (
-            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>No insights yet. Add some expenses to get started.</p>
+            <div className="empty-state">
+              <div className="empty-state-icon">🤖</div>
+              No insights yet. Add some expenses to get started.
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {insights.map((ins, i) => (
                 <div key={i} style={{
                   padding: '0.75rem 1rem',
-                  borderRadius: '8px',
-                  borderLeft: `4px solid ${ins.severity === 'alert' ? '#dc2626' : ins.severity === 'warning' ? '#d97706' : '#0ea5e9'}`,
-                  background: ins.severity === 'alert' ? '#fff5f5' : ins.severity === 'warning' ? '#fffbeb' : '#f0f9ff',
-                }}>
+                  borderRadius: 'var(--radius-md)',
+                  borderLeft: `4px solid ${ins.severity === 'alert' ? 'var(--color-red)' : ins.severity === 'warning' ? 'var(--color-orange)' : 'var(--color-blue)'}`,
+                  background: ins.severity === 'alert' ? 'var(--color-red-bg)' : ins.severity === 'warning' ? 'var(--color-orange-bg)' : 'var(--color-blue-bg)',
+                  cursor: ins.category_id ? 'pointer' : 'default',
+                }}
+                  onClick={() => ins.category_id && drillToCategory(ins.category_id)}
+                  title={ins.category_id ? 'Click to drill down to this category' : ''}
+                >
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1rem' }}>{SEVERITY_ICON[ins.severity]}</span>
+                    <span>{SEVERITY_ICON[ins.severity]}</span>
                     <div>
-                      <span className={`badge ${SEVERITY_CLASS[ins.severity]}`} style={{ marginBottom: '0.3rem', display: 'inline-block' }}>
+                      <span className={`badge ${SEVERITY_CLASS[ins.severity]}`} style={{ marginBottom: '0.25rem', display: 'inline-block' }}>
                         {ins.type.replace(/_/g, ' ')}
                       </span>
-                      <p style={{ fontSize: '0.85rem', color: '#374151', margin: 0 }}>{ins.message}</p>
+                      <p style={{ fontSize: '0.84rem', color: 'var(--text-primary)', margin: 0 }}>{ins.message}</p>
                     </div>
                   </div>
                 </div>

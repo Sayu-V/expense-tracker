@@ -10,6 +10,52 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.3.0] — feature/v1.1.0 — 2026-03-27
+
+### Added
+
+**Frontend — UI/UX (Apple Design Guidelines)**
+- Full Apple-inspired design system in `index.css`: SF Pro system font, CSS custom properties for all colours/spacing/radius/shadow, smooth transitions on all interactive elements
+- Light / Dark theme toggle in the topbar — toggle button (🌙/☀️) applies `data-theme="dark"` on `<html>`, CSS variables switch automatically
+- `components/PeriodSelector.jsx` — segmented Week/Month/Quarter/Year control + ‹ / › navigation arrows; driven by shared `PeriodContext`
+- `context/PeriodContext.jsx` — global period state (type + offset); computes `dateFrom`, `dateTo`, `label`, `month`, `year` — consumed by Dashboard, Expenses, Budgets simultaneously
+- Sticky topbar on all pages: period selector on the left, theme toggle on the right
+- Sidebar redesigned: section labels, nav icons, logo version badge, footer attribution
+
+**Frontend — Edit & Delete**
+- `components/EditExpenseModal.jsx` — modal to edit any expense/income entry (amount, category, description, notes, date, type); uses existing `.modal-overlay` CSS; dismisses on backdrop click
+- Edit (✏️) and Delete (🗑) buttons on every row in the Expenses table
+- `pages/Categories.jsx` (new page) — full category management: view all 15 default categories + custom ones, edit name/emoji/color via modal (with emoji picker + color swatches), delete custom categories with confirmation guard; default categories show "default" badge and cannot be deleted
+- 🏷️ Categories nav link added to sidebar
+
+**Frontend — Period-aware views**
+- Dashboard: all API calls (summary, breakdown, trend, budgets, recent expenses) pass `date_from`/`date_to` from PeriodContext; re-fetches automatically when period changes
+- Expenses: default date filters initialised from PeriodContext; all filters apply immediately
+- Budgets: `Set Budget` form and status panel use `period.month`/`period.year` from context; automatically updates when month changes in the topbar
+
+**Frontend — Drill-down from Dashboard**
+- Total Spend card → `/expenses?date_from=…&date_to=…&type=expense`
+- Total Income card → `/expenses?date_from=…&date_to=…&type=income`
+- Transactions card → `/expenses?date_from=…&date_to=…`
+- Pie chart slice (click) → `/expenses?category_id=X&date_from=…&date_to=…`
+- Budget vs Actual bar (click) → same category drill-down
+- Recent Entries row (click) → category drill-down
+- AI Insights card (click, if category_id present) → category drill-down
+- "View all →" button in Recent Entries panel
+- Expenses page reads URL `?category_id`, `?date_from`, `?date_to`, `?type` from query params to pre-populate filters on arrival from drill-down
+- Budgets page rows are clickable → drill-down to category expenses
+
+### Changed
+- `App.jsx` — replaced flat layout with `<PeriodProvider>` + `<AppShell>` structure; splash screen retained on every load
+- `Dashboard.jsx` — all inline hardcoded colours replaced with CSS variables; chart tooltips styled with `var(--bg-elevated)` and `var(--border)`
+- `Expenses.jsx` — `allCategories` state replaces `categories` (needed for cross-type lookups in table rows); add-form categories filtered by selected entry type
+- `Budgets.jsx` — now loads only expense categories in the set-budget form (income categories irrelevant for budgeting)
+
+### Tests
+- All 12 existing pytest tests pass (v1.3.0 changes are frontend-only)
+
+---
+
 ## [1.1.0] — feature/v1.1.0 — 2026-03-27
 
 ### Added
