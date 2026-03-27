@@ -6,6 +6,18 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased] — feature/v1.1.0
+
+### Planned Features
+- **Income tracking** — Add income records alongside expenses; net balance calculation
+- **Category emojis** — Emoji icons per category type displayed in UI and charts
+- **AI auto-categorisation** — Backend analyses expense/income description and suggests the most likely category automatically
+- **Finance quote of the day** — Random motivational finance quote displayed at the top of the dashboard
+- **Animated splash screen** — Intro animation showing app features, version number, developer name, and GitHub link
+- **Amount range filter UI** — Expose existing backend min/max amount filter params in the Expenses page filter bar
+
+---
+
 ## [1.0.0] — 2026-03-27
 
 ### Initial Release
