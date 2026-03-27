@@ -4,7 +4,7 @@
  * Actions: create, toggle active/inactive, edit, delete, generate now.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { recurringApi, categoriesApi } from '../api/index'
 import { useAutoRefresh } from '../hooks/useAutoRefresh'
 
@@ -29,12 +29,13 @@ export default function RecurringExpenses() {
   const [genLoading, setGenLoading] = useState({})     // {id: bool}
   const [genResult,  setGenResult]  = useState(null)   // last generate result
   const refreshKey = useAutoRefresh(60)
+  const isFirstLoad = useRef(true)   // only show spinner on very first fetch
 
   const expenseCategories = categories.filter(c => c.category_type === 'expense')
 
   const load = useCallback(async () => {
     try {
-      setLoading(true)
+      if (isFirstLoad.current) setLoading(true)
       const [recs, cats] = await Promise.all([recurringApi.list(), categoriesApi.list()])
       setItems(recs.data)
       setCategories(cats.data)
@@ -43,6 +44,7 @@ export default function RecurringExpenses() {
       setError('Failed to load recurring expenses.')
     } finally {
       setLoading(false)
+      isFirstLoad.current = false
     }
   }, [])
 

@@ -88,7 +88,7 @@ function InlineChart({ type, data, title }) {
               labelLine={{ stroke: ct.labelLineStroke }}>
               {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
             </Pie>
-            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} itemStyle={ct.tooltipItemStyle} labelStyle={ct.tooltipLabelStyle} />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.75rem', color: ct.textSecondary }} />
           </PieChart>
         ) : type === 'bar' ? (
@@ -96,7 +96,7 @@ function InlineChart({ type, data, title }) {
             <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
             <XAxis dataKey="label" tick={ct.tickSm} />
             <YAxis tick={ct.tickSm} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} itemStyle={ct.tooltipItemStyle} labelStyle={ct.tooltipLabelStyle} />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
             </Bar>
@@ -106,7 +106,7 @@ function InlineChart({ type, data, title }) {
             <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
             <XAxis dataKey="label" tick={ct.tickSm} />
             <YAxis tick={ct.tickSm} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} itemStyle={ct.tooltipItemStyle} labelStyle={ct.tooltipLabelStyle} />
             <Line type="monotone" dataKey="value" stroke={ct.accent} strokeWidth={2} dot={{ r: 4, fill: ct.accent }} />
           </LineChart>
         ) : <g />}

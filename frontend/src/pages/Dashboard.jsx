@@ -219,6 +219,8 @@ export default function Dashboard() {
                 <Tooltip
                   formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
                   contentStyle={ct.tooltipStyle}
+                  itemStyle={ct.tooltipItemStyle}
+                  labelStyle={ct.tooltipLabelStyle}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -233,7 +235,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
               <XAxis dataKey="label" tick={ct.tickSm} />
               <YAxis tick={ct.tickSm} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} itemStyle={ct.tooltipItemStyle} labelStyle={ct.tooltipLabelStyle} />
               <Legend wrapperStyle={ct.legendStyle} />
               <Line type="monotone" dataKey="total"  name="Expenses" stroke={ct.colorRed}   strokeWidth={2} dot={{ r: 4, fill: ct.colorRed }} />
               <Line type="monotone" dataKey="income" name="Income"   stroke={ct.colorGreen} strokeWidth={2} dot={{ r: 4, fill: ct.colorGreen }} strokeDasharray="5 3" />
@@ -266,7 +268,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
               <XAxis type="number" tickFormatter={(v) => `₹${v.toLocaleString('en-IN')}`} tick={ct.tickSm} />
               <YAxis type="category" dataKey="category_name" tick={ct.tickMd} width={75} />
-              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} itemStyle={ct.tooltipItemStyle} labelStyle={ct.tooltipLabelStyle} />
               <Legend wrapperStyle={ct.legendStyle} />
               <Bar dataKey="budgeted" name="Budget" fill={ct.accentLight} radius={[0, 4, 4, 0]} />
               <Bar dataKey="actual"   name="Actual" fill={ct.accent}      radius={[0, 4, 4, 0]} />

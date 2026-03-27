@@ -3,7 +3,7 @@
  * Savings Goal Tracker — set goals, track progress, see projected completion.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { goalsApi } from '../api/index'
 import { useAutoRefresh } from '../hooks/useAutoRefresh'
 
@@ -209,10 +209,11 @@ export default function Goals() {
   const [savingsModal, setSavingsModal] = useState(null)  // goal object
   const [filter,       setFilter]       = useState('all') // all | active | completed
   const refreshKey = useAutoRefresh(60)
+  const isFirstLoad = useRef(true)   // only show spinner on very first fetch
 
   const load = useCallback(async () => {
     try {
-      setLoading(true)
+      if (isFirstLoad.current) setLoading(true)
       const res = await goalsApi.list()
       setGoals(res.data)
       setError(null)
@@ -220,6 +221,7 @@ export default function Goals() {
       setError('Failed to load goals.')
     } finally {
       setLoading(false)
+      isFirstLoad.current = false
     }
   }, [])
 

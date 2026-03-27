@@ -181,8 +181,6 @@ function AppShell({ theme, onToggleTheme }) {
           <NavLink to="/chat" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">💬</span> Chat AI
           </NavLink>
-
-          <span className="nav-section-label" style={{ marginTop: '0.75rem' }}>v1.7 Features</span>
           <NavLink to="/recurring" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">🔄</span> Recurring
           </NavLink>
