@@ -32,7 +32,7 @@ const TYPE_OPTIONS = [
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([])
-  const [categories, setCategories] = useState([])
+  const [allCategories, setAllCategories] = useState([])  // all 15 categories
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
 
@@ -57,6 +57,11 @@ export default function Expenses() {
   const [suggestion, setSuggestion] = useState(null)  // { name, id, emoji }
   const debouncedDesc = useDebounce(form.description, 400)
 
+  // Derived: categories filtered to match the current entry type
+  const formCategories = allCategories.filter((c) => c.category_type === form.type)
+  // All categories (for the filter bar — user may want to filter any type)
+  const categories = allCategories
+
   // ── Data fetching ────────────────────────────────────────────────────────
 
   const fetchExpenses = useCallback(() => {
@@ -71,7 +76,7 @@ export default function Expenses() {
   }, [filterCategory, filterDateFrom, filterDateTo, filterMinAmount, filterMaxAmount, filterType])
 
   useEffect(() => {
-    categoriesApi.list().then((r) => setCategories(r.data))
+    categoriesApi.list().then((r) => setAllCategories(r.data))
     fetchExpenses()
   }, [])
 
@@ -84,8 +89,10 @@ export default function Expenses() {
       setSuggestion(null)
       return
     }
-    // Only auto-suggest if user hasn't manually picked a category
-    client.get('/expenses/suggest-category', { params: { description: debouncedDesc } })
+    // Pass entry_type so backend uses the correct keyword map (expense vs income)
+    client.get('/expenses/suggest-category', {
+      params: { description: debouncedDesc, entry_type: form.type }
+    })
       .then((r) => {
         if (r.data.confidence === 'high' && r.data.suggested_category_id) {
           setSuggestion({
@@ -98,7 +105,7 @@ export default function Expenses() {
         }
       })
       .catch(() => setSuggestion(null))
-  }, [debouncedDesc])
+  }, [debouncedDesc, form.type])  // re-run when type changes too
 
   const applySuggestion = () => {
     if (suggestion) {
@@ -180,7 +187,12 @@ export default function Expenses() {
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {TYPE_OPTIONS.map((opt) => (
                   <button key={opt.value} type="button"
-                    onClick={() => setForm({ ...form, type: opt.value })}
+                    onClick={() => {
+                      // Reset category and suggestion when switching type
+                      // so expense categories don't linger when switching to income
+                      setForm({ ...form, type: opt.value, category_id: '' })
+                      setSuggestion(null)
+                    }}
                     style={{
                       padding: '0.45rem 1.1rem',
                       borderRadius: '6px',
@@ -207,8 +219,8 @@ export default function Expenses() {
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>Category *</label>
               <select required value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
-                <option value="">Select category...</option>
-                {categories.map((c) => (
+                <option value="">Select {form.type} category...</option>
+                {formCategories.map((c) => (
                   <option key={c.id} value={c.id}>{c.emoji ?? ''} {c.name}</option>
                 ))}
               </select>

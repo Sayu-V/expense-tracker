@@ -2,8 +2,9 @@ import client from './client'
 export { expensesApi } from './expenses'
 
 export const categoriesApi = {
-  list: () => client.get('/categories'),
+  list: (params = {}) => client.get('/categories', { params }),  // supports ?category_type=expense|income
   create: (data) => client.post('/categories', data),
+  update: (id, data) => client.put(`/categories/${id}`, data),
   delete: (id) => client.delete(`/categories/${id}`),
 }
 

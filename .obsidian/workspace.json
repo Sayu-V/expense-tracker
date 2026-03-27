@@ -241,6 +241,7 @@
   },
   "active": "29894ba4d7c22572",
   "lastOpenFiles": [
+    "frontend/vite.config.js.timestamp-1774609740823-317cf614cbc94.mjs",
     "frontend/src/context/PeriodContext.jsx",
     "frontend/src/context",
     "docs/Tech_Stack.md",
@@ -258,7 +259,6 @@
     "backend/app/services/__pycache__/budget_service.cpython-310.pyc",
     "backend/app/routers/__pycache__/budgets.cpython-310.pyc",
     "backend/app/routers/__pycache__/categories.cpython-310.pyc",
-    "backend/app/services/__pycache__/categorize_service.cpython-310.pyc",
     "docs/Walkthrough.md",
     "CHANGELOG.md",
     "README.md"

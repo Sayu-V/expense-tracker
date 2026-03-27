@@ -194,7 +194,9 @@ export default function Dashboard() {
               <XAxis dataKey="label" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
-              <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} />
+              <Legend />
+              <Line type="monotone" dataKey="total" name="Expenses" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="income" name="Income" stroke="#16a34a" strokeWidth={2} dot={{ r: 4 }} strokeDasharray="5 3" />
             </LineChart>
           </ResponsiveContainer>
         </div>
