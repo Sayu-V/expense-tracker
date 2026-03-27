@@ -1,13 +1,15 @@
 /**
  * pages/Dashboard.jsx
  * --------------------
- * Main dashboard with 5 data widgets:
- *   1. Total Spend This Month (metric card + MoM change)
- *   2. Spend by Category (Pie chart)
- *   3. Budget vs Actual (Horizontal bar chart)
- *   4. Monthly Trend (Line chart)
- *   5. Recent Expenses (table)
- *   6. AI Insights panel
+ * Main dashboard with data widgets:
+ *   1. Finance Quote of the Day      (v1.1.0)
+ *   2. Total Spend / Income / Net Balance metric cards  (v1.1.0 extended)
+ *   3. Transactions / Avg per Expense / Categories Used
+ *   4. Spend by Category (Pie chart)
+ *   5. Monthly Trend (Line chart)
+ *   6. Budget vs Actual (Horizontal bar chart)
+ *   7. Recent Expenses (table — shows type badge)
+ *   8. AI Insights panel
  */
 
 import { useEffect, useState } from 'react'
@@ -17,6 +19,7 @@ import {
   BarChart, Bar,
 } from 'recharts'
 import { reportsApi, budgetsApi, expensesApi, insightsApi } from '../api/index'
+import { getRandomQuote } from '../data/quotes'
 
 const SEVERITY_CLASS = {
   info: 'severity-info',
@@ -35,6 +38,9 @@ export default function Dashboard() {
   const [recentExpenses, setRecentExpenses] = useState([])
   const [insights, setInsights] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // v1.1.0: Quote of the day — picked once on mount
+  const [quote] = useState(() => getRandomQuote())
 
   useEffect(() => {
     const now = new Date()
@@ -63,7 +69,7 @@ export default function Dashboard() {
     }).catch(() => setLoading(false))
   }, [])
 
-  // Month-over-month % change
+  // Month-over-month % change (expenses only)
   const momChange = summary && prevSummary && prevSummary.total_spend > 0
     ? (((summary.total_spend - prevSummary.total_spend) / prevSummary.total_spend) * 100).toFixed(1)
     : null
@@ -72,26 +78,82 @@ export default function Dashboard() {
     return <div style={{ padding: '3rem', color: '#888' }}>Loading dashboard...</div>
   }
 
+  // Net balance colour
+  const netBalance = summary?.net_balance ?? 0
+  const netColor = netBalance >= 0 ? '#16a34a' : '#dc2626'
+  const netIcon = netBalance >= 0 ? '▲' : '▼'
+
   return (
     <div>
       <h1 className="page-title">Dashboard</h1>
 
+      {/* ── Quote of the Day ── */}
+      <div style={{
+        marginBottom: '1.5rem',
+        padding: '1rem 1.25rem',
+        background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)',
+        borderRadius: '12px',
+        borderLeft: '4px solid #6366f1',
+        display: 'flex',
+        gap: '0.75rem',
+        alignItems: 'flex-start',
+      }}>
+        <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>💬</span>
+        <div>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: '#374151', fontStyle: 'italic', lineHeight: 1.5 }}>
+            "{quote.text}"
+          </p>
+          <p style={{ margin: '0.3rem 0 0', fontSize: '0.78rem', color: '#6366f1', fontWeight: 600 }}>
+            — {quote.author}
+          </p>
+        </div>
+      </div>
+
       {/* ── Row 1: Metric cards ── */}
       <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
+        {/* Total Spend */}
         <div className="card">
           <div className="metric-label">Total Spend</div>
-          <div className="metric-value">₹{summary?.total_spend?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) ?? '—'}</div>
+          <div className="metric-value" style={{ color: '#dc2626' }}>
+            ₹{summary?.total_spend?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) ?? '—'}
+          </div>
           {momChange !== null && (
             <div className="metric-sub" style={{ color: momChange > 0 ? '#dc2626' : '#16a34a' }}>
               {momChange > 0 ? '▲' : '▼'} {Math.abs(momChange)}% vs last month
             </div>
           )}
         </div>
+
+        {/* Total Income (v1.1.0) */}
+        <div className="card">
+          <div className="metric-label">Total Income</div>
+          <div className="metric-value" style={{ color: '#16a34a' }}>
+            ₹{summary?.total_income?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) ?? '—'}
+          </div>
+          <div className="metric-sub">This month</div>
+        </div>
+
+        {/* Net Balance (v1.1.0) */}
+        <div className="card">
+          <div className="metric-label">Net Balance</div>
+          <div className="metric-value" style={{ color: netColor }}>
+            {netIcon} ₹{Math.abs(netBalance).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+          </div>
+          <div className="metric-sub" style={{ color: netColor }}>
+            {netBalance >= 0 ? 'In surplus' : 'Overspent'}
+          </div>
+        </div>
+
+        {/* Transactions */}
         <div className="card">
           <div className="metric-label">Transactions</div>
           <div className="metric-value">{summary?.expense_count ?? '—'}</div>
-          <div className="metric-sub">This month</div>
+          <div className="metric-sub">Expenses this month</div>
         </div>
+      </div>
+
+      {/* ── Row 1b: secondary metric cards ── */}
+      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
         <div className="card">
           <div className="metric-label">Avg per Expense</div>
           <div className="metric-value">₹{summary?.avg_expense?.toFixed(0) ?? '—'}</div>
@@ -176,13 +238,24 @@ export default function Dashboard() {
                 {recentExpenses.slice(0, 10).map((e) => (
                   <tr key={e.id}>
                     <td style={{ color: '#888', fontSize: '0.8rem' }}>{e.date}</td>
-                    <td>{e.description}</td>
+                    <td>
+                      {e.type === 'income' && (
+                        <span style={{
+                          fontSize: '0.68rem', fontWeight: 700, background: '#dcfce7',
+                          color: '#16a34a', borderRadius: '4px', padding: '1px 5px',
+                          marginRight: '5px', verticalAlign: 'middle',
+                        }}>IN</span>
+                      )}
+                      {e.description}
+                    </td>
                     <td>
                       <span className="badge" style={{ background: e.category?.color + '22', color: e.category?.color }}>
-                        {e.category?.name ?? '—'}
+                        {e.category?.emoji ?? ''} {e.category?.name ?? '—'}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>₹{e.amount.toLocaleString('en-IN')}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: e.type === 'income' ? '#16a34a' : 'inherit' }}>
+                      {e.type === 'income' ? '+' : ''}₹{e.amount.toLocaleString('en-IN')}
+                    </td>
                   </tr>
                 ))}
               </tbody>

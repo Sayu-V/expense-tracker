@@ -5,6 +5,7 @@ All CRUD routes for expense records.
 Routes:
   POST   /api/v1/expenses
   GET    /api/v1/expenses
+  GET    /api/v1/expenses/suggest-category  (v1.1.0)
   GET    /api/v1/expenses/{id}
   PUT    /api/v1/expenses/{id}
   DELETE /api/v1/expenses/{id}
@@ -16,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.database import get_session
-from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead
+from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead, SuggestCategoryResponse
 from app.services.expense_service import (
     create_expense,
     get_expense_by_id,
@@ -24,6 +25,7 @@ from app.services.expense_service import (
     update_expense,
     delete_expense,
 )
+from app.services.categorize_service import suggest_category
 
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
@@ -34,6 +36,26 @@ def create(payload: ExpenseCreate, session: Session = Depends(get_session)):
     return create_expense(session, payload)
 
 
+@router.get("/suggest-category", response_model=SuggestCategoryResponse)
+def suggest_category_endpoint(
+    description: str = Query(..., min_length=1, description="Expense description to categorise"),
+    session: Session = Depends(get_session),
+):
+    """
+    v1.1.0 — AI auto-categorisation via keyword matching.
+    Returns the suggested category for a given description string.
+    No external APIs — pure rule-based keyword matching.
+    """
+    category, confidence = suggest_category(session, description)
+    return SuggestCategoryResponse(
+        description=description,
+        suggested_category_id=category.id if category else None,
+        suggested_category_name=category.name if category else None,
+        suggested_category_emoji=category.emoji if category else None,
+        confidence=confidence,
+    )
+
+
 @router.get("", response_model=list[ExpenseRead])
 def list_all(
     category_id: Optional[int] = Query(None, description="Filter by category"),
@@ -41,13 +63,14 @@ def list_all(
     date_to: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
     min_amount: Optional[float] = Query(None, description="Minimum amount"),
     max_amount: Optional[float] = Query(None, description="Maximum amount"),
+    type: Optional[str] = Query(None, description="Filter by type: 'expense' or 'income'"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     session: Session = Depends(get_session),
 ):
     """
     List expenses with optional filters.
-    All filters are combinable — e.g. ?category_id=1&date_from=2026-03-01
+    All filters are combinable — e.g. ?category_id=1&date_from=2026-03-01&type=expense
     """
     return list_expenses(
         session,
@@ -56,6 +79,7 @@ def list_all(
         date_to=date_to,
         min_amount=min_amount,
         max_amount=max_amount,
+        type=type,
         limit=limit,
         offset=offset,
     )

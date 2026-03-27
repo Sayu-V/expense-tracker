@@ -34,6 +34,7 @@ def create_expense(session: Session, payload: ExpenseCreate) -> Expense:
         description=payload.description,
         notes=payload.notes,
         date=payload.date,
+        type=payload.type,   # v1.1.0
     )
     session.add(expense)
     session.commit()
@@ -53,12 +54,14 @@ def list_expenses(
     date_to: Optional[date] = None,
     min_amount: Optional[float] = None,
     max_amount: Optional[float] = None,
+    type: Optional[str] = None,   # v1.1.0: 'expense' | 'income'
     limit: int = 100,
     offset: int = 0,
 ) -> list[Expense]:
     """
     List expenses with optional filters.
     Results are sorted by date descending (most recent first).
+    v1.1.0: Added type filter for income vs expense separation.
     """
     query = select(Expense)
 
@@ -72,6 +75,8 @@ def list_expenses(
         query = query.where(Expense.amount >= min_amount)
     if max_amount is not None:
         query = query.where(Expense.amount <= max_amount)
+    if type is not None:
+        query = query.where(Expense.type == type)
 
     query = query.order_by(Expense.date.desc()).offset(offset).limit(limit)
     return session.exec(query).all()

@@ -6,4 +6,6 @@ export const expensesApi = {
   create: (data) => client.post('/expenses', data),
   update: (id, data) => client.put(`/expenses/${id}`, data),
   delete: (id) => client.delete(`/expenses/${id}`),
+  // v1.1.0 — AI auto-categorisation
+  suggestCategory: (description) => client.get('/expenses/suggest-category', { params: { description } }),
 }

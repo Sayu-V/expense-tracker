@@ -25,24 +25,45 @@ def _month_range(year: int, month: int) -> tuple[date, date]:
 
 
 def get_monthly_summary(session: Session, month: int, year: int) -> MonthlySummary:
-    """Total spend, count, and average for a given month."""
+    """
+    Total spend, income, net balance, count, and average for a given month.
+    v1.1.0: Added income and net_balance using the Expense.type field.
+    """
     start, end = _month_range(year, month)
 
-    result = session.exec(
+    # Expenses (type = 'expense' OR legacy rows with no type set)
+    expense_result = session.exec(
         select(
             func.sum(Expense.amount),
             func.count(Expense.id),
-        ).where(Expense.date >= start, Expense.date <= end)
+        ).where(
+            Expense.date >= start,
+            Expense.date <= end,
+            Expense.type == "expense",
+        )
     ).first()
 
-    total = round(result[0] or 0.0, 2)
-    count = result[1] or 0
+    # Income entries
+    income_result = session.exec(
+        select(func.sum(Expense.amount)).where(
+            Expense.date >= start,
+            Expense.date <= end,
+            Expense.type == "income",
+        )
+    ).first()
+
+    total = round(expense_result[0] or 0.0, 2)
+    count = expense_result[1] or 0
     avg = round(total / count, 2) if count > 0 else 0.0
+    income = round(income_result or 0.0, 2)
+    net = round(income - total, 2)
 
     return MonthlySummary(
         month=month,
         year=year,
         total_spend=total,
+        total_income=income,
+        net_balance=net,
         expense_count=count,
         avg_expense=avg,
     )
@@ -63,7 +84,11 @@ def get_category_breakdown(
             func.sum(Expense.amount).label("total"),
             func.count(Expense.id).label("count"),
         )
-        .where(Expense.date >= start, Expense.date <= end)
+        .where(
+            Expense.date >= start,
+            Expense.date <= end,
+            Expense.type == "expense",   # v1.1.0: exclude income from breakdown
+        )
         .group_by(Expense.category_id)
         .order_by(func.sum(Expense.amount).desc())
     ).all()
@@ -100,7 +125,9 @@ def get_spend_trend(session: Session, months: int = 6) -> list[TrendPoint]:
 
         total_result = session.exec(
             select(func.sum(Expense.amount)).where(
-                Expense.date >= start, Expense.date <= end
+                Expense.date >= start,
+                Expense.date <= end,
+                Expense.type == "expense",   # v1.1.0: exclude income from trend
             )
         ).first()
 

@@ -27,13 +27,13 @@ from app.routers import expenses, categories, budgets, reports, insights
 # ---------------------------------------------------------------------------
 
 DEFAULT_CATEGORIES = [
-    {"name": "Food",           "color": "#f97316", "is_default": True},
-    {"name": "Transport",      "color": "#3b82f6", "is_default": True},
-    {"name": "Housing",        "color": "#8b5cf6", "is_default": True},
-    {"name": "Health",         "color": "#10b981", "is_default": True},
-    {"name": "Entertainment",  "color": "#ec4899", "is_default": True},
-    {"name": "Shopping",       "color": "#f59e0b", "is_default": True},
-    {"name": "Other",          "color": "#6b7280", "is_default": True},
+    {"name": "Food",           "color": "#f97316", "emoji": "🍔", "is_default": True},
+    {"name": "Transport",      "color": "#3b82f6", "emoji": "🚗", "is_default": True},
+    {"name": "Housing",        "color": "#8b5cf6", "emoji": "🏠", "is_default": True},
+    {"name": "Health",         "color": "#10b981", "emoji": "💊", "is_default": True},
+    {"name": "Entertainment",  "color": "#ec4899", "emoji": "🎬", "is_default": True},
+    {"name": "Shopping",       "color": "#f59e0b", "emoji": "🛒", "is_default": True},
+    {"name": "Other",          "color": "#6b7280", "emoji": "📦", "is_default": True},
 ]
 
 
@@ -41,6 +41,7 @@ def seed_default_categories() -> None:
     """
     Inserts default categories if they don't already exist.
     Idempotent — safe to call on every startup.
+    v1.1.0: Also updates emoji on existing rows that still have the default '💰'.
     """
     with Session(engine) as session:
         for cat_data in DEFAULT_CATEGORIES:
@@ -50,6 +51,10 @@ def seed_default_categories() -> None:
             if not existing:
                 category = Category(**cat_data)
                 session.add(category)
+            elif existing.emoji == "💰":
+                # Back-fill emoji for rows created before v1.1.0
+                existing.emoji = cat_data["emoji"]
+                session.add(existing)
         session.commit()
 
 
@@ -73,7 +78,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="Personal finance tracking with FastAPI, SQLModel, and PostgreSQL",
-    version="1.0.0",
+    version="1.1.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
@@ -111,4 +116,4 @@ app.include_router(insights.router,   prefix="/api/v1")
 @app.get("/health", tags=["Health"])
 def health_check():
     """Quick liveness check — Docker healthcheck hits this."""
-    return {"status": "ok", "version": "1.0.0"}
+    return {"status": "ok", "version": "1.1.0"}

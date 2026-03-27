@@ -9,6 +9,10 @@ Tables:
   - Category  → categories
   - Expense   → expenses
   - Budget    → budgets
+
+v1.1.0 additions:
+  - Category.emoji  — display emoji for category badges (e.g. 🍔 for Food)
+  - Expense.type    — 'expense' (default) or 'income' for income tracking
 """
 
 from datetime import date as Date, datetime
@@ -26,6 +30,7 @@ class Category(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=100, unique=True, index=True)
     color: str = Field(default="#6366f1", max_length=7)   # Hex color for UI charts
+    emoji: str = Field(default="💰", max_length=10)        # v1.1.0: category emoji
     is_default: bool = Field(default=False)               # True = seeded, cannot be deleted
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -38,6 +43,8 @@ class Expense(SQLModel, table=True):
     """
     Core table. Each row is one expense record.
     category_id is a FK to categories.id — must be a valid category.
+
+    v1.1.0: type field distinguishes expenses from income entries.
     """
     __tablename__ = "expenses"
 
@@ -46,6 +53,7 @@ class Expense(SQLModel, table=True):
     description: str = Field(max_length=200)
     notes: Optional[str] = Field(default=None, max_length=500)
     date: Date = Field(index=True)                         # Indexed for fast date range queries
+    type: str = Field(default="expense", max_length=10)    # v1.1.0: 'expense' | 'income'
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

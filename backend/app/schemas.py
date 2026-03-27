@@ -23,6 +23,7 @@ from pydantic import BaseModel, field_validator
 class CategoryCreate(BaseModel):
     name: str
     color: str = "#6366f1"
+    emoji: str = "💰"   # v1.1.0: category emoji
 
     @field_validator("color")
     @classmethod
@@ -36,6 +37,7 @@ class CategoryRead(BaseModel):
     id: int
     name: str
     color: str
+    emoji: str = "💰"   # v1.1.0
     is_default: bool
     created_at: datetime
 
@@ -52,6 +54,7 @@ class ExpenseCreate(BaseModel):
     description: str
     notes: Optional[str] = None
     date: date
+    type: str = "expense"   # v1.1.0: 'expense' | 'income'
 
     @field_validator("amount")
     @classmethod
@@ -67,6 +70,13 @@ class ExpenseCreate(BaseModel):
             raise ValueError("description cannot be blank")
         return v.strip()
 
+    @field_validator("type")
+    @classmethod
+    def type_must_be_valid(cls, v: str) -> str:
+        if v not in ("expense", "income"):
+            raise ValueError("type must be 'expense' or 'income'")
+        return v
+
 
 class ExpenseUpdate(BaseModel):
     amount: Optional[float] = None
@@ -74,6 +84,7 @@ class ExpenseUpdate(BaseModel):
     description: Optional[str] = None
     notes: Optional[str] = None
     date: Optional[date] = None
+    type: Optional[str] = None   # v1.1.0
 
     @field_validator("amount")
     @classmethod
@@ -81,6 +92,13 @@ class ExpenseUpdate(BaseModel):
         if v is not None and v <= 0:
             raise ValueError("amount must be greater than 0")
         return round(v, 2) if v is not None else None
+
+    @field_validator("type")
+    @classmethod
+    def type_must_be_valid(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("expense", "income"):
+            raise ValueError("type must be 'expense' or 'income'")
+        return v
 
 
 class ExpenseRead(BaseModel):
@@ -91,10 +109,24 @@ class ExpenseRead(BaseModel):
     description: str
     notes: Optional[str] = None
     date: date
+    type: str = "expense"   # v1.1.0
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
+# v1.1.0 — AI Suggest Category schema
+# ---------------------------------------------------------------------------
+
+class SuggestCategoryResponse(BaseModel):
+    """Response for GET /expenses/suggest-category?description=..."""
+    description: str
+    suggested_category_id: Optional[int] = None
+    suggested_category_name: Optional[str] = None
+    suggested_category_emoji: Optional[str] = None
+    confidence: str  # 'high' | 'low'
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +186,8 @@ class MonthlySummary(BaseModel):
     month: int
     year: int
     total_spend: float
+    total_income: float = 0.0   # v1.1.0: sum of income-type entries
+    net_balance: float = 0.0    # v1.1.0: income - expenses
     expense_count: int
     avg_expense: float
 
