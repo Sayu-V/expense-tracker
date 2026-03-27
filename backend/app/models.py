@@ -29,9 +29,10 @@ class Category(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=100, unique=True, index=True)
-    color: str = Field(default="#6366f1", max_length=7)   # Hex color for UI charts
-    emoji: str = Field(default="💰", max_length=10)        # v1.1.0: category emoji
-    is_default: bool = Field(default=False)               # True = seeded, cannot be deleted
+    color: str = Field(default="#6366f1", max_length=7)         # Hex color for UI charts
+    emoji: str = Field(default="💰", max_length=10)              # v1.1.0: category emoji
+    category_type: str = Field(default="expense", max_length=10) # v1.2.0: 'expense' | 'income'
+    is_default: bool = Field(default=False)                     # True = seeded, cannot be deleted
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships (used for ORM queries, not serialized by default)

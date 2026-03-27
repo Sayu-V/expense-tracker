@@ -2,12 +2,15 @@
 services/report_service.py
 --------------------------
 All analytics computations for reports endpoints.
-Uses raw SQLModel/SQLAlchemy aggregations for performance — avoids
-loading full Expense objects when only aggregates are needed.
+
+v1.2.0: All functions accept explicit date_from / date_to instead of
+month/year only, enabling week/quarter/year period support from the frontend.
+month/year params are kept for backwards-compat fallback.
 """
 
 from calendar import monthrange
 from datetime import date, datetime
+from typing import Optional
 from dateutil.relativedelta import relativedelta
 
 from sqlmodel import Session, select, func
@@ -24,14 +27,35 @@ def _month_range(year: int, month: int) -> tuple[date, date]:
     return first, last
 
 
-def get_monthly_summary(session: Session, month: int, year: int) -> MonthlySummary:
+def _resolve_range(
+    date_from: Optional[date],
+    date_to: Optional[date],
+    month: int,
+    year: int,
+) -> tuple[date, date]:
     """
-    Total spend, income, net balance, count, and average for a given month.
-    v1.1.0: Added income and net_balance using the Expense.type field.
+    If explicit date range provided, use it. Otherwise fall back to month/year.
     """
-    start, end = _month_range(year, month)
+    if date_from and date_to:
+        return date_from, date_to
+    return _month_range(year, month)
 
-    # Expenses (type = 'expense' OR legacy rows with no type set)
+
+def get_monthly_summary(
+    session: Session,
+    month: int,
+    year: int,
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    period_label: str = "",
+) -> MonthlySummary:
+    """
+    Total spend, income, net balance, count, and average for a date range.
+    v1.2.0: accepts explicit date_from/date_to for week/quarter/year support.
+    """
+    start, end = _resolve_range(date_from, date_to, month, year)
+
+    # Expenses only
     expense_result = session.exec(
         select(
             func.sum(Expense.amount),
@@ -66,17 +90,22 @@ def get_monthly_summary(session: Session, month: int, year: int) -> MonthlySumma
         net_balance=net,
         expense_count=count,
         avg_expense=avg,
+        period_label=period_label,
     )
 
 
 def get_category_breakdown(
-    session: Session, month: int, year: int
+    session: Session,
+    month: int,
+    year: int,
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
 ) -> list[CategoryBreakdown]:
     """
-    Per-category spend totals for a month, with percentage of total.
+    Per-category spend totals for a date range, with percentage of total.
     Sorted by total descending.
     """
-    start, end = _month_range(year, month)
+    start, end = _resolve_range(date_from, date_to, month, year)
 
     rows = session.exec(
         select(
@@ -87,13 +116,13 @@ def get_category_breakdown(
         .where(
             Expense.date >= start,
             Expense.date <= end,
-            Expense.type == "expense",   # v1.1.0: exclude income from breakdown
+            Expense.type == "expense",
         )
         .group_by(Expense.category_id)
         .order_by(func.sum(Expense.amount).desc())
     ).all()
 
-    grand_total = sum(r[1] for r in rows) or 1  # avoid division by zero
+    grand_total = sum(r[1] for r in rows) or 1
 
     result = []
     for row in rows:
@@ -127,17 +156,27 @@ def get_spend_trend(session: Session, months: int = 6) -> list[TrendPoint]:
             select(func.sum(Expense.amount)).where(
                 Expense.date >= start,
                 Expense.date <= end,
-                Expense.type == "expense",   # v1.1.0: exclude income from trend
+                Expense.type == "expense",
+            )
+        ).first()
+
+        income_result = session.exec(
+            select(func.sum(Expense.amount)).where(
+                Expense.date >= start,
+                Expense.date <= end,
+                Expense.type == "income",
             )
         ).first()
 
         total = round(total_result or 0.0, 2)
-        label = target.strftime("%b %Y")  # e.g. "Mar 2026"
+        income = round(income_result or 0.0, 2)
+        label = target.strftime("%b %Y")
 
         result.append(TrendPoint(
             month=target.month,
             year=target.year,
             total=total,
+            income=income,
             label=label,
         ))
 
@@ -145,14 +184,23 @@ def get_spend_trend(session: Session, months: int = 6) -> list[TrendPoint]:
 
 
 def get_top_expenses(
-    session: Session, month: int, year: int, limit: int = 5
+    session: Session,
+    month: int,
+    year: int,
+    limit: int = 5,
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
 ) -> list[Expense]:
-    """Top N highest-amount expenses in a given month, sorted descending."""
-    start, end = _month_range(year, month)
+    """Top N highest-amount expenses in a date range, sorted descending."""
+    start, end = _resolve_range(date_from, date_to, month, year)
 
     return session.exec(
         select(Expense)
-        .where(Expense.date >= start, Expense.date <= end)
+        .where(
+            Expense.date >= start,
+            Expense.date <= end,
+            Expense.type == "expense",
+        )
         .order_by(Expense.amount.desc())
         .limit(limit)
     ).all()

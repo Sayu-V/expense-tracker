@@ -23,7 +23,8 @@ from pydantic import BaseModel, field_validator
 class CategoryCreate(BaseModel):
     name: str
     color: str = "#6366f1"
-    emoji: str = "💰"   # v1.1.0: category emoji
+    emoji: str = "💰"              # v1.1.0
+    category_type: str = "expense"  # v1.2.0: 'expense' | 'income'
 
     @field_validator("color")
     @classmethod
@@ -32,12 +33,34 @@ class CategoryCreate(BaseModel):
             raise ValueError("color must be a 7-character hex string like #6366f1")
         return v
 
+    @field_validator("category_type")
+    @classmethod
+    def validate_category_type(cls, v: str) -> str:
+        if v not in ("expense", "income"):
+            raise ValueError("category_type must be 'expense' or 'income'")
+        return v
+
+
+class CategoryUpdate(BaseModel):
+    """v1.2.0 — partial update for categories."""
+    name: Optional[str] = None
+    color: Optional[str] = None
+    emoji: Optional[str] = None
+
+    @field_validator("color")
+    @classmethod
+    def validate_hex_color(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and (not v.startswith("#") or len(v) != 7):
+            raise ValueError("color must be a 7-character hex string like #6366f1")
+        return v
+
 
 class CategoryRead(BaseModel):
     id: int
     name: str
     color: str
-    emoji: str = "💰"   # v1.1.0
+    emoji: str = "💰"              # v1.1.0
+    category_type: str = "expense"  # v1.2.0
     is_default: bool
     created_at: datetime
 
@@ -190,6 +213,8 @@ class MonthlySummary(BaseModel):
     net_balance: float = 0.0    # v1.1.0: income - expenses
     expense_count: int
     avg_expense: float
+    # v1.2.0: period info for display
+    period_label: str = ""       # e.g. "Mar 2026", "Q1 2026", "Week 13"
 
 
 class CategoryBreakdown(BaseModel):
@@ -205,7 +230,8 @@ class TrendPoint(BaseModel):
     month: int
     year: int
     total: float
-    label: str   # e.g. "Mar 2026"
+    income: float = 0.0   # v1.2.0: income for the same period
+    label: str            # e.g. "Mar 2026"
 
 
 # ---------------------------------------------------------------------------

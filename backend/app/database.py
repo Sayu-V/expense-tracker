@@ -42,10 +42,12 @@ def _apply_v1_1_0_migrations() -> None:
     Uses IF NOT EXISTS (PostgreSQL 9.6+) — completely safe to re-run.
     """
     migrations = [
-        # Add 'type' column to expenses (expense | income)
+        # v1.1.0 — Add 'type' column to expenses (expense | income)
         "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS type VARCHAR(10) DEFAULT 'expense' NOT NULL",
-        # Add 'emoji' column to categories
+        # v1.1.0 — Add 'emoji' column to categories
         "ALTER TABLE categories ADD COLUMN IF NOT EXISTS emoji VARCHAR(10) DEFAULT '💰' NOT NULL",
+        # v1.2.0 — Add 'category_type' column to categories (expense | income)
+        "ALTER TABLE categories ADD COLUMN IF NOT EXISTS category_type VARCHAR(10) DEFAULT 'expense' NOT NULL",
     ]
     with Session(engine) as session:
         for sql in migrations:

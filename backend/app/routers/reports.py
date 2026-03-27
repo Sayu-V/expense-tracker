@@ -2,6 +2,10 @@
 routers/reports.py
 ------------------
 Analytics and reporting routes.
+
+v1.2.0: All endpoints accept optional date_from/date_to for custom period
+support (week, quarter, year) driven from the frontend period selector.
+
 Routes:
   GET /api/v1/reports/monthly-summary
   GET /api/v1/reports/by-category
@@ -9,7 +13,7 @@ Routes:
   GET /api/v1/reports/top-expenses
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
@@ -30,14 +34,20 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 def monthly_summary(
     month: Optional[int] = Query(None, ge=1, le=12),
     year: Optional[int] = Query(None),
+    date_from: Optional[date] = Query(None, description="v1.2.0: Custom range start (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(None, description="v1.2.0: Custom range end (YYYY-MM-DD)"),
+    period_label: str = Query("", description="v1.2.0: Human-readable label for the period"),
     session: Session = Depends(get_session),
 ):
-    """Total spend, count, and average for a given month."""
+    """Total spend, income, net balance, count, and average for a period."""
     now = datetime.utcnow()
     return get_monthly_summary(
         session,
         month=month or now.month,
         year=year or now.year,
+        date_from=date_from,
+        date_to=date_to,
+        period_label=period_label,
     )
 
 
@@ -45,14 +55,18 @@ def monthly_summary(
 def by_category(
     month: Optional[int] = Query(None, ge=1, le=12),
     year: Optional[int] = Query(None),
+    date_from: Optional[date] = Query(None),
+    date_to: Optional[date] = Query(None),
     session: Session = Depends(get_session),
 ):
-    """Spend breakdown by category for a given month, with percentages."""
+    """Spend breakdown by category for a period, with percentages."""
     now = datetime.utcnow()
     return get_category_breakdown(
         session,
         month=month or now.month,
         year=year or now.year,
+        date_from=date_from,
+        date_to=date_to,
     )
 
 
@@ -61,7 +75,7 @@ def spend_trend(
     months: int = Query(6, ge=1, le=24, description="How many months of history"),
     session: Session = Depends(get_session),
 ):
-    """Monthly total spend over the past N months (default: 6)."""
+    """Monthly total spend + income over the past N months."""
     return get_spend_trend(session, months=months)
 
 
@@ -69,14 +83,18 @@ def spend_trend(
 def top_expenses(
     month: Optional[int] = Query(None, ge=1, le=12),
     year: Optional[int] = Query(None),
+    date_from: Optional[date] = Query(None),
+    date_to: Optional[date] = Query(None),
     limit: int = Query(5, ge=1, le=20),
     session: Session = Depends(get_session),
 ):
-    """Top N highest-amount expenses in a given month."""
+    """Top N highest-amount expenses in a period."""
     now = datetime.utcnow()
     return get_top_expenses(
         session,
         month=month or now.month,
         year=year or now.year,
         limit=limit,
+        date_from=date_from,
+        date_to=date_to,
     )

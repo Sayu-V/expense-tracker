@@ -27,13 +27,23 @@ from app.routers import expenses, categories, budgets, reports, insights
 # ---------------------------------------------------------------------------
 
 DEFAULT_CATEGORIES = [
-    {"name": "Food",           "color": "#f97316", "emoji": "🍔", "is_default": True},
-    {"name": "Transport",      "color": "#3b82f6", "emoji": "🚗", "is_default": True},
-    {"name": "Housing",        "color": "#8b5cf6", "emoji": "🏠", "is_default": True},
-    {"name": "Health",         "color": "#10b981", "emoji": "💊", "is_default": True},
-    {"name": "Entertainment",  "color": "#ec4899", "emoji": "🎬", "is_default": True},
-    {"name": "Shopping",       "color": "#f59e0b", "emoji": "🛒", "is_default": True},
-    {"name": "Other",          "color": "#6b7280", "emoji": "📦", "is_default": True},
+    # ── Expense categories ────────────────────────────────────────────────
+    {"name": "Food",           "color": "#f97316", "emoji": "🍔", "category_type": "expense", "is_default": True},
+    {"name": "Transport",      "color": "#3b82f6", "emoji": "🚗", "category_type": "expense", "is_default": True},
+    {"name": "Housing",        "color": "#8b5cf6", "emoji": "🏠", "category_type": "expense", "is_default": True},
+    {"name": "Health",         "color": "#10b981", "emoji": "💊", "category_type": "expense", "is_default": True},
+    {"name": "Entertainment",  "color": "#ec4899", "emoji": "🎬", "category_type": "expense", "is_default": True},
+    {"name": "Shopping",       "color": "#f59e0b", "emoji": "🛒", "category_type": "expense", "is_default": True},
+    {"name": "Other",          "color": "#6b7280", "emoji": "📦", "category_type": "expense", "is_default": True},
+    # ── Income categories (v1.2.0) ────────────────────────────────────────
+    {"name": "Salary",         "color": "#059669", "emoji": "💼", "category_type": "income", "is_default": True},
+    {"name": "Pocket Money",   "color": "#0891b2", "emoji": "👛", "category_type": "income", "is_default": True},
+    {"name": "Freelance",      "color": "#7c3aed", "emoji": "💻", "category_type": "income", "is_default": True},
+    {"name": "Side Hustle",    "color": "#db2777", "emoji": "🚀", "category_type": "income", "is_default": True},
+    {"name": "Stocks",         "color": "#16a34a", "emoji": "📊", "category_type": "income", "is_default": True},
+    {"name": "Dividend",       "color": "#ca8a04", "emoji": "📈", "category_type": "income", "is_default": True},
+    {"name": "Gift",           "color": "#dc2626", "emoji": "🎁", "category_type": "income", "is_default": True},
+    {"name": "Rental Income",  "color": "#9333ea", "emoji": "🏘️", "category_type": "income", "is_default": True},
 ]
 
 
@@ -51,9 +61,13 @@ def seed_default_categories() -> None:
             if not existing:
                 category = Category(**cat_data)
                 session.add(category)
-            elif existing.emoji == "💰":
+            else:
                 # Back-fill emoji for rows created before v1.1.0
-                existing.emoji = cat_data["emoji"]
+                if existing.emoji == "💰":
+                    existing.emoji = cat_data["emoji"]
+                # Back-fill category_type for rows created before v1.2.0
+                if existing.category_type == "expense" and cat_data.get("category_type") == "income":
+                    existing.category_type = "income"
                 session.add(existing)
         session.commit()
 
@@ -78,7 +92,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="Personal finance tracking with FastAPI, SQLModel, and PostgreSQL",
-    version="1.1.0",
+    version="1.2.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
@@ -116,4 +130,4 @@ app.include_router(insights.router,   prefix="/api/v1")
 @app.get("/health", tags=["Health"])
 def health_check():
     """Quick liveness check — Docker healthcheck hits this."""
-    return {"status": "ok", "version": "1.1.0"}
+    return {"status": "ok", "version": "1.2.0"}

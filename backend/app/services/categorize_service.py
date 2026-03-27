@@ -2,15 +2,17 @@
 services/categorize_service.py
 --------------------------------
 v1.1.0 — AI Auto-Categorisation via keyword matching.
+v1.2.0 — Separate keyword maps for expense vs income categories.
 
 No external API required. Uses a curated keyword→category map to suggest
 the most likely category for a description string.
 
 Strategy:
   1. Lowercase + split the description into tokens.
-  2. For each category's keyword list, count how many tokens match.
-  3. Return the category with the highest match score.
-  4. If no keywords match at all, return None (caller falls back to "Other").
+  2. Pick the keyword map based on entry_type ('expense' | 'income').
+  3. For each category's keyword list, count how many tokens match.
+  4. Return the category with the highest match score.
+  5. If no keywords match at all, return None (caller falls back to first category).
 
 Confidence:
   - 'high'  → at least one keyword matched
@@ -28,10 +30,10 @@ from app.models import Category
 
 
 # ---------------------------------------------------------------------------
-# Keyword map — category name → list of trigger keywords / phrases
+# Expense keyword map
 # ---------------------------------------------------------------------------
 
-KEYWORD_MAP: dict[str, list[str]] = {
+EXPENSE_KEYWORD_MAP: dict[str, list[str]] = {
     "Food": [
         "food", "eat", "lunch", "dinner", "breakfast", "snack", "meal",
         "restaurant", "cafe", "coffee", "tea", "pizza", "burger", "biryani",
@@ -80,30 +82,81 @@ KEYWORD_MAP: dict[str, list[str]] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Income keyword map  (v1.2.0)
+# ---------------------------------------------------------------------------
+
+INCOME_KEYWORD_MAP: dict[str, list[str]] = {
+    "Salary": [
+        "salary", "wage", "wages", "pay", "payroll", "monthly pay",
+        "ctc", "hike", "appraisal", "job", "employment", "stipend",
+        "payday", "compensation", "bonus", "increment",
+    ],
+    "Pocket Money": [
+        "pocket money", "pocket", "allowance", "parents", "family",
+        "monthly allowance", "weekly allowance", "personal allowance",
+        "dad", "mom", "father", "mother", "home money",
+    ],
+    "Freelance": [
+        "freelance", "freelancing", "client", "project payment", "invoice",
+        "upwork", "fiverr", "toptal", "contract", "consulting", "gig",
+        "design payment", "development payment", "writing payment",
+    ],
+    "Side Hustle": [
+        "side hustle", "side income", "part time", "part-time", "extra income",
+        "secondary", "weekend job", "tutoring", "tuition", "coaching",
+        "teaching", "delivery", "youtube", "content", "creator", "affiliate",
+        "commission", "referral",
+    ],
+    "Stocks": [
+        "stocks", "stock", "equity", "shares", "zerodha", "groww", "upstox",
+        "trading", "intraday", "swing trade", "capital gain", "ipo",
+        "demat", "nse", "bse", "sensex", "nifty",
+    ],
+    "Dividend": [
+        "dividend", "dividends", "interest", "fd", "fixed deposit",
+        "rd", "recurring deposit", "mutual fund", "mf", "sip",
+        "return", "yield", "payout", "profit",
+    ],
+    "Gift": [
+        "gift", "birthday gift", "received", "cash gift", "prize",
+        "reward", "cashback", "refund", "lottery", "won", "winning",
+        "award", "scholarship",
+    ],
+    "Rental Income": [
+        "rent received", "rental", "tenant", "property", "house rent",
+        "room rent", "pg income", "sublease", "airbnb", "lease",
+    ],
+}
+
+
 def _tokenize(text: str) -> list[str]:
-    """Lowercase and split into word tokens, keeping multi-word phrases."""
+    """Lowercase and split into word tokens."""
     return re.findall(r"[a-z0-9]+", text.lower())
 
 
 def suggest_category(
-    session: Session, description: str
+    session: Session,
+    description: str,
+    entry_type: str = "expense",
 ) -> tuple[Optional[Category], str]:
     """
     Returns (Category | None, confidence).
-
     confidence is 'high' if keywords matched, 'low' otherwise.
+
+    entry_type: 'expense' | 'income' — selects which keyword map to use.
     """
+    keyword_map = INCOME_KEYWORD_MAP if entry_type == "income" else EXPENSE_KEYWORD_MAP
+
     tokens = set(_tokenize(description))
-    # Also test the raw lowercased description for substring matches
     desc_lower = description.lower()
 
     best_category_name: Optional[str] = None
     best_score = 0
 
-    for category_name, keywords in KEYWORD_MAP.items():
+    for category_name, keywords in keyword_map.items():
         score = 0
         for kw in keywords:
-            # Token match (exact word) or substring match for phrases
             if kw in tokens or kw in desc_lower:
                 score += 1
         if score > best_score:
@@ -113,7 +166,6 @@ def suggest_category(
     if best_category_name is None or best_score == 0:
         return None, "low"
 
-    # Look up the Category row by name
     category = session.exec(
         select(Category).where(Category.name == best_category_name)
     ).first()

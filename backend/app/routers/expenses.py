@@ -39,14 +39,14 @@ def create(payload: ExpenseCreate, session: Session = Depends(get_session)):
 @router.get("/suggest-category", response_model=SuggestCategoryResponse)
 def suggest_category_endpoint(
     description: str = Query(..., min_length=1, description="Expense description to categorise"),
+    entry_type: str = Query("expense", description="'expense' or 'income' — selects keyword map"),
     session: Session = Depends(get_session),
 ):
     """
     v1.1.0 — AI auto-categorisation via keyword matching.
-    Returns the suggested category for a given description string.
-    No external APIs — pure rule-based keyword matching.
+    v1.2.0 — entry_type param selects income vs expense keyword map.
     """
-    category, confidence = suggest_category(session, description)
+    category, confidence = suggest_category(session, description, entry_type=entry_type)
     return SuggestCategoryResponse(
         description=description,
         suggested_category_id=category.id if category else None,

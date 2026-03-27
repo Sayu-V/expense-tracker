@@ -17,12 +17,12 @@
                 "state": {
                   "type": "markdown",
                   "state": {
-                    "file": "CLAUDE.md",
+                    "file": "docs/Walkthrough.md",
                     "mode": "source",
                     "source": false
                   },
                   "icon": "lucide-file",
-                  "title": "CLAUDE"
+                  "title": "Walkthrough"
                 }
               }
             ]
@@ -149,7 +149,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "CLAUDE.md",
+                "file": "docs/Walkthrough.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -159,7 +159,7 @@
                 "unlinkedCollapsed": false
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for CLAUDE"
+              "title": "Backlinks for Walkthrough"
             }
           },
           {
@@ -241,6 +241,15 @@
   },
   "active": "29894ba4d7c22572",
   "lastOpenFiles": [
+    "frontend/src/context/PeriodContext.jsx",
+    "frontend/src/context",
+    "docs/Tech_Stack.md",
+    "docs/LLD.md",
+    "docs/HLD.md",
+    "docs/expense_tracker_architecture.svg",
+    "docs/expense_request_flow.svg",
+    "docs/Architecture.md",
+    "CLAUDE.md",
     "backend/pytest-cache-files-yqrg6mvi",
     "backend/app/services/__pycache__/insights_service.cpython-310.pyc",
     "backend/app/routers/__pycache__/insights.cpython-310.pyc",
@@ -250,17 +259,8 @@
     "backend/app/routers/__pycache__/budgets.cpython-310.pyc",
     "backend/app/routers/__pycache__/categories.cpython-310.pyc",
     "backend/app/services/__pycache__/categorize_service.cpython-310.pyc",
-    "backend/app/services/__pycache__/expense_service.cpython-310.pyc",
-    "backend/app/services/__pycache__/__init__.cpython-310.pyc",
-    "docs/LLD.md",
-    "docs/HLD.md",
     "docs/Walkthrough.md",
-    "docs/Tech_Stack.md",
-    "docs/Architecture.md",
     "CHANGELOG.md",
-    "docs/expense_tracker_architecture.svg",
-    "docs/expense_request_flow.svg",
-    "README.md",
-    "CLAUDE.md"
+    "README.md"
   ]
 }
