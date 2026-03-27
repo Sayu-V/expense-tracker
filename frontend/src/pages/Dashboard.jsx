@@ -9,10 +9,13 @@
  *   - Income / Net Balance cards
  * v1.4.0:
  *   - Auto-refresh every 30 s via useAutoRefresh hook (pauses when tab hidden)
+ * v1.6.0:
+ *   - All Recharts props use useChartTheme() for dark/light mode correctness
  */
 
 import { useEffect, useState } from 'react'
 import { useAutoRefresh } from '../hooks/useAutoRefresh'
+import { useChartTheme } from '../hooks/useChartTheme'
 import { useNavigate } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -30,6 +33,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { period } = usePeriod()
   const refreshKey = useAutoRefresh()   // v1.4.0 — auto-refresh every 30 s
+  const ct = useChartTheme()            // v1.6.0 — reactive chart colours
 
   const [summary,        setSummary]        = useState(null)
   const [prevSummary,    setPrevSummary]     = useState(null)
@@ -206,7 +210,7 @@ export default function Dashboard() {
                   cursor="pointer"
                   onClick={(entry) => drillToCategory(entry.category_id)}
                   label={({ category_name, percentage }) => `${category_name} ${percentage}%`}
-                  labelLine={{ stroke: 'var(--text-tertiary)' }}
+                  labelLine={{ stroke: ct.labelLineStroke }}
                 >
                   {breakdown.map((entry) => (
                     <Cell key={entry.category_id} fill={entry.category_color} />
@@ -214,7 +218,7 @@ export default function Dashboard() {
                 </Pie>
                 <Tooltip
                   formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
-                  contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
+                  contentStyle={ct.tooltipStyle}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -226,16 +230,13 @@ export default function Dashboard() {
           <div className="section-title">Monthly Trend (6 months)</div>
           <ResponsiveContainer width="100%" height={230}>
             <LineChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
-              <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip
-                formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
-                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
-              />
-              <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
-              <Line type="monotone" dataKey="total"  name="Expenses" stroke="var(--color-red)"   strokeWidth={2} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="income" name="Income"   stroke="var(--color-green)" strokeWidth={2} dot={{ r: 4 }} strokeDasharray="5 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
+              <XAxis dataKey="label" tick={ct.tickSm} />
+              <YAxis tick={ct.tickSm} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+              <Legend wrapperStyle={ct.legendStyle} />
+              <Line type="monotone" dataKey="total"  name="Expenses" stroke={ct.colorRed}   strokeWidth={2} dot={{ r: 4, fill: ct.colorRed }} />
+              <Line type="monotone" dataKey="income" name="Income"   stroke={ct.colorGreen} strokeWidth={2} dot={{ r: 4, fill: ct.colorGreen }} strokeDasharray="5 3" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -262,16 +263,13 @@ export default function Dashboard() {
               }}
               style={{ cursor: 'pointer' }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis type="number" tickFormatter={(v) => `₹${v.toLocaleString('en-IN')}`} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
-              <YAxis type="category" dataKey="category_name" tick={{ fontSize: 12, fill: 'var(--text-primary)' }} width={75} />
-              <Tooltip
-                formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
-                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '10px' }}
-              />
-              <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
-              <Bar dataKey="budgeted" name="Budget" fill="var(--accent-light)" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="actual"   name="Actual" fill="var(--accent)"       radius={[0, 4, 4, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
+              <XAxis type="number" tickFormatter={(v) => `₹${v.toLocaleString('en-IN')}`} tick={ct.tickSm} />
+              <YAxis type="category" dataKey="category_name" tick={ct.tickMd} width={75} />
+              <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+              <Legend wrapperStyle={ct.legendStyle} />
+              <Bar dataKey="budgeted" name="Budget" fill={ct.accentLight} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="actual"   name="Actual" fill={ct.accent}      radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

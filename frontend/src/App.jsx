@@ -1,18 +1,14 @@
 /**
  * App.jsx
  * --------
- * v1.4.0:
- *   - Mobile-responsive: hamburger → slide-in sidebar drawer + backdrop
- *   - Sidebar auto-closes when a nav link is tapped on mobile
- *   - Version badge updated to v1.4
- *   - Persistent theme preference via localStorage (with fallback)
- * v1.5.0:
- *   - Chat page added (💬 Chat with your data)
- *   - Version badge updated to v1.5
+ * v1.4.0: Mobile-responsive hamburger drawer, localStorage theme.
+ * v1.5.0: Chat page route.
+ * v1.6.0: Collapsible sidebar (desktop) — ← collapse button in sidebar,
+ *          hamburger reveals sidebar when collapsed, state in localStorage.
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { BrowserRouter, Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import Dashboard    from './pages/Dashboard'
 import Expenses     from './pages/Expenses'
 import Budgets      from './pages/Budgets'
@@ -26,27 +22,33 @@ import './index.css'
 // Pages that show the period selector in the topbar
 const PERIOD_PAGES = ['/', '/expenses', '/budgets']
 
-// ── Helper: read/write theme from localStorage safely ───────────────────────
-function getSavedTheme() {
-  try { return localStorage.getItem('et-theme') || 'light' } catch { return 'light' }
+// ── localStorage helpers ─────────────────────────────────────────────────────
+function lsGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v === null ? fallback : v } catch { return fallback }
 }
-function saveTheme(t) {
-  try { localStorage.setItem('et-theme', t) } catch { /* sandboxed — ignore */ }
+function lsSet(key, value) {
+  try { localStorage.setItem(key, value) } catch { /* sandboxed */ }
 }
 
-// ── TopBar ──────────────────────────────────────────────────────────────────
-function TopBar({ theme, onToggleTheme, onOpenMenu }) {
-  const location  = useLocation()
+// ── TopBar ───────────────────────────────────────────────────────────────────
+function TopBar({ theme, onToggleTheme, onMenuToggle, sidebarHidden }) {
+  const location   = useLocation()
   const showPeriod = PERIOD_PAGES.includes(location.pathname)
 
   return (
     <div className="topbar">
       <div className="topbar-left">
-        {/* Hamburger — visible only on mobile via CSS */}
+        {/*
+          Hamburger:
+          • On mobile   (≤768px): always visible via CSS, opens the drawer
+          • On desktop  (>768px): hidden by default; appears when sidebar
+                                  is collapsed so user can reopen it
+        */}
         <button
-          className="menu-toggle"
-          onClick={onOpenMenu}
-          aria-label="Open navigation menu"
+          className={`menu-toggle${sidebarHidden ? ' menu-toggle-visible' : ''}`}
+          onClick={onMenuToggle}
+          aria-label="Toggle navigation sidebar"
+          title="Show sidebar"
         >
           ☰
         </button>
@@ -69,16 +71,42 @@ function TopBar({ theme, onToggleTheme, onOpenMenu }) {
 
 // ── AppShell ─────────────────────────────────────────────────────────────────
 function AppShell({ theme, onToggleTheme }) {
+  // Mobile drawer state
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // Desktop sidebar collapsed state — persisted in localStorage
+  const [sidebarHidden, setSidebarHidden] = useState(
+    () => lsGet('et-sidebar-hidden', '0') === '1'
+  )
 
   const openMenu  = useCallback(() => setMenuOpen(true),  [])
   const closeMenu = useCallback(() => setMenuOpen(false), [])
 
-  // Close sidebar on route change (mobile nav tap)
+  const collapseSidebar = useCallback(() => {
+    setSidebarHidden(true)
+    lsSet('et-sidebar-hidden', '1')
+  }, [])
+
+  const expandSidebar = useCallback(() => {
+    setSidebarHidden(false)
+    lsSet('et-sidebar-hidden', '0')
+    setMenuOpen(false)
+  }, [])
+
+  // Unified hamburger handler — desktop shows sidebar, mobile opens drawer
+  const handleMenuToggle = useCallback(() => {
+    if (window.innerWidth > 768) {
+      expandSidebar()
+    } else {
+      openMenu()
+    }
+  }, [expandSidebar, openMenu])
+
+  // Close drawer on route change (mobile nav tap)
   const location = useLocation()
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
-  // Close on Escape key
+  // Escape closes mobile drawer
   useEffect(() => {
     if (!menuOpen) return
     const handleKey = (e) => { if (e.key === 'Escape') closeMenu() }
@@ -86,7 +114,7 @@ function AppShell({ theme, onToggleTheme }) {
     return () => document.removeEventListener('keydown', handleKey)
   }, [menuOpen, closeMenu])
 
-  // Prevent body scroll when drawer is open (mobile)
+  // Lock body scroll when mobile drawer is open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -94,7 +122,7 @@ function AppShell({ theme, onToggleTheme }) {
 
   return (
     <div className="app">
-      {/* ── Sidebar backdrop (mobile only) ── */}
+      {/* ── Mobile backdrop ── */}
       <div
         className={`sidebar-backdrop${menuOpen ? ' sidebar-open' : ''}`}
         onClick={closeMenu}
@@ -102,17 +130,23 @@ function AppShell({ theme, onToggleTheme }) {
       />
 
       {/* ── Sidebar ── */}
-      <nav className={`sidebar${menuOpen ? ' sidebar-open' : ''}`} aria-label="Main navigation">
+      <nav
+        className={[
+          'sidebar',
+          menuOpen      ? 'sidebar-open'      : '',
+          sidebarHidden ? 'sidebar-collapsed' : '',
+        ].filter(Boolean).join(' ')}
+        aria-label="Main navigation"
+      >
         <div className="sidebar-header">
           <div className="logo">
             💰 Expense Tracker
-            <span className="logo-version">v1.5</span>
+            <span className="logo-version">v1.6</span>
           </div>
         </div>
 
         <div className="sidebar-nav">
           <span className="nav-section-label">Menu</span>
-
           <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">📊</span> Dashboard
           </NavLink>
@@ -131,7 +165,7 @@ function AppShell({ theme, onToggleTheme }) {
         </div>
 
         <div className="sidebar-footer">
-          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.5, marginBottom: '0.5rem' }}>
             Built by{' '}
             <a
               href="https://github.com/Sayu-V/expense-tracker"
@@ -143,12 +177,26 @@ function AppShell({ theme, onToggleTheme }) {
             </a>
             <br />IBM Student Project
           </div>
+
+          {/* Desktop-only collapse button */}
+          <button
+            className="sidebar-collapse-btn"
+            onClick={collapseSidebar}
+            title="Collapse sidebar — use ☰ in the topbar to reopen"
+          >
+            ◀ Collapse
+          </button>
         </div>
       </nav>
 
-      {/* ── Main ── */}
-      <div className="main-content">
-        <TopBar theme={theme} onToggleTheme={onToggleTheme} onOpenMenu={openMenu} />
+      {/* ── Main content ── */}
+      <div className={`main-content${sidebarHidden ? ' sidebar-collapsed' : ''}`}>
+        <TopBar
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onMenuToggle={handleMenuToggle}
+          sidebarHidden={sidebarHidden}
+        />
         <div className="page-content">
           <Routes>
             <Route path="/"           element={<Dashboard />} />
@@ -166,13 +214,11 @@ function AppShell({ theme, onToggleTheme }) {
 // ── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
-
-  // Theme — persisted in localStorage where available, falls back to 'light'
-  const [theme, setTheme] = useState(getSavedTheme)
+  const [theme, setTheme] = useState(() => lsGet('et-theme', 'light'))
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    saveTheme(theme)
+    lsSet('et-theme', theme)
   }, [theme])
 
   const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))
@@ -180,7 +226,6 @@ export default function App() {
   return (
     <>
       {showSplash && <SplashScreen onDismiss={() => setShowSplash(false)} />}
-
       <PeriodProvider>
         <BrowserRouter>
           <AppShell theme={theme} onToggleTheme={toggleTheme} />

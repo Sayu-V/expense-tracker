@@ -105,7 +105,7 @@ export default function SplashScreen({ onDismiss }) {
           letterSpacing: '0.5px',
           marginBottom: '1.25rem',
         }}>
-          v1.5.0
+          v1.6.0
         </span>
 
         {/* Feature list — 2 cols on wide, 1 col on narrow */}

@@ -10,6 +10,34 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.0] — feature/v1.1.0 — 2026-03-27
+
+### Added
+
+**Collapsible Sidebar (Feature 1)**
+- "◀ Collapse" button at the bottom of the sidebar (desktop only via `.sidebar-collapse-btn`)
+- Sidebar slides off-screen with smooth CSS transition (`transform`, 280 ms cubic-bezier) when collapsed
+- `.main-content` margin-left transitions to `0` simultaneously so content fills the full width
+- Collapsed state persisted in `localStorage` under the key `et-sidebar-hidden`
+- Hamburger ☰ becomes visible on desktop automatically (`.menu-toggle-visible`) when sidebar is hidden — clicking it re-opens the sidebar
+- Sidebar logo version badge updated `v1.5` → `v1.6`
+
+**Polished Dark / Light Theme for Charts & Graphs (Feature 4)**
+- New `hooks/useChartTheme.js` — `MutationObserver` watches `<html data-theme>` and re-reads resolved CSS variable values via `getComputedStyle` on every theme change; returns pre-built prop objects (`tickSm`, `tickMd`, `tooltipStyle`, `legendStyle`, `gridStroke`, `labelLineStroke`, raw colour strings)
+- Root cause fixed: SVG presentation attributes (`stroke`, `fill` on `<CartesianGrid>`, `<Line>`, `<Bar>`) are not evaluated as CSS — literals like `"var(--border)"` were rendered as invalid colour strings
+- `Dashboard.jsx` and `Chat.jsx` (`InlineChart` component) consume `ct = useChartTheme()` and pass resolved hex/rgba values to all Recharts props
+- `index.css` additions: axis lines, tick lines, tooltip cursor, legend wrapper, active dot, pie labels all have CSS overrides that adapt to `[data-theme="dark"]`; dark-mode tooltip receives a drop-shadow for depth
+- Splash screen version badge updated `v1.5.0` → `v1.6.0`
+
+### Changed
+- `App.jsx` — `getSavedTheme`/`saveTheme` helpers replaced by unified `lsGet`/`lsSet` helpers used for both theme and sidebar state
+- `lsGet` / `lsSet` wrap `localStorage` access in try/catch for sandboxed-browser resilience
+
+### Tests
+- All 12 existing pytest tests pass (v1.6.0 changes are frontend-only)
+
+---
+
 ## [1.5.0] — feature/v1.1.0 — 2026-03-27
 
 ### Added

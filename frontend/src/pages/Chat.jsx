@@ -22,6 +22,7 @@ import {
   ResponsiveContainer, Legend,
 } from 'recharts'
 import { chatApi } from '../api/index'
+import { useChartTheme } from '../hooks/useChartTheme'
 
 // ── Colour palette for charts ─────────────────────────────────────────────────
 const PALETTE = ['#5E5CE6','#34C759','#FF3B30','#FF9500','#007AFF','#FF2D55','#AF52DE','#30D158']
@@ -62,8 +63,10 @@ function BoldText({ text }) {
   )
 }
 
-// ── Inline chart ──────────────────────────────────────────────────────────────
+// ── Inline chart — v1.6.0: theme-aware colours via useChartTheme ──────────────
 function InlineChart({ type, data, title }) {
+  const ct = useChartTheme()   // reactive: re-renders on light ↔ dark toggle
+
   if (!data || data.length === 0 || type === 'none') return null
 
   const chartData = data.map((d, i) => ({
@@ -74,36 +77,37 @@ function InlineChart({ type, data, title }) {
   return (
     <div style={{ marginTop: '1rem' }}>
       {title && (
-        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: ct.textSecondary, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {title}
         </div>
       )}
       <ResponsiveContainer width="100%" height={220}>
         {type === 'pie' ? (
           <PieChart>
-            <Pie data={chartData} dataKey="value" nameKey="label" cx="50%" cy="50%" outerRadius={80} paddingAngle={2}>
+            <Pie data={chartData} dataKey="value" nameKey="label" cx="50%" cy="50%" outerRadius={80} paddingAngle={2}
+              labelLine={{ stroke: ct.labelLineStroke }}>
               {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
             </Pie>
-            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.75rem' }} />
+            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.75rem', color: ct.textSecondary }} />
           </PieChart>
         ) : type === 'bar' ? (
           <BarChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
+            <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
+            <XAxis dataKey="label" tick={ct.tickSm} />
+            <YAxis tick={ct.tickSm} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
             </Bar>
           </BarChart>
         ) : type === 'line' ? (
           <LineChart data={chartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} />
-            <Line type="monotone" dataKey="value" stroke={PALETTE[0]} strokeWidth={2} dot={{ r: 4 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
+            <XAxis dataKey="label" tick={ct.tickSm} />
+            <YAxis tick={ct.tickSm} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+            <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} />
+            <Line type="monotone" dataKey="value" stroke={ct.accent} strokeWidth={2} dot={{ r: 4, fill: ct.accent }} />
           </LineChart>
         ) : <g />}
       </ResponsiveContainer>

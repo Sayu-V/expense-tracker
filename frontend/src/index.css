@@ -119,7 +119,9 @@ body {
   position: fixed;
   height: 100vh;
   z-index: 100;
-  transition: background var(--transition);
+  /* v1.6.0: animate collapse on desktop */
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              background var(--transition);
 }
 
 .sidebar-header {
@@ -202,6 +204,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* v1.6.0: animate sidebar collapse */
+  transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Top bar ─────────────────────────────────────────────────── */
@@ -854,4 +858,103 @@ tr:hover td { background: var(--bg-base); transition: background 0.1s; }
    ================================================================ */
 button, a, select, input[type="checkbox"], input[type="radio"] {
   touch-action: manipulation;
+}
+
+/* ================================================================
+   SIDEBAR COLLAPSE — v1.6.0
+   Desktop only (>768px). On mobile the existing drawer handles it.
+   ================================================================ */
+
+/* ── Sidebar collapse button (inside sidebar footer) ───────────── */
+.sidebar-collapse-btn {
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  border-radius: 0;
+  color: rgba(255,255,255,0.32);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  transition: all var(--transition);
+  min-height: unset;
+  margin-top: 0.25rem;
+}
+.sidebar-collapse-btn:hover {
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.06);
+}
+
+/* ── Desktop: collapsed state ──────────────────────────────────── */
+@media (min-width: 769px) {
+  .sidebar.sidebar-collapsed {
+    transform: translateX(-100%);
+  }
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+  /* Show the hamburger on desktop ONLY when sidebar is collapsed */
+  .menu-toggle.menu-toggle-visible {
+    display: flex;
+  }
+}
+
+/* ================================================================
+   CHART & GRAPH THEME POLISH — v1.6.0
+   Recharts SVG elements that Recharts does NOT apply via React style
+   but via className (e.g. axis lines, cursor line) must be overridden
+   here so they adapt to dark mode.
+   ================================================================ */
+
+/* Axis tick lines and domain lines */
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--border) !important;
+}
+
+/* Cursor line shown on hover */
+.recharts-tooltip-cursor {
+  stroke: var(--border) !important;
+  opacity: 0.6;
+}
+
+/* Reference lines */
+.recharts-reference-line-line {
+  stroke: var(--text-tertiary) !important;
+}
+
+/* Default recharts text (fallback if not overridden via tick prop) */
+.recharts-text {
+  fill: var(--text-secondary);
+}
+
+/* Legend text wrapper */
+.recharts-legend-wrapper {
+  color: var(--text-secondary);
+}
+
+/* Active dot border in line charts — make it stand out in dark mode */
+.recharts-active-dot circle {
+  stroke: var(--bg-surface) !important;
+}
+
+/* Pie label text */
+.recharts-pie-label-text {
+  fill: var(--text-primary) !important;
+  font-size: 0.72rem;
+}
+
+/* Bar active fill on hover — ensure contrast in dark mode */
+.recharts-bar-rectangle:focus {
+  outline: none;
+}
+
+/* Tooltip wrapper — remove default white shadow in dark mode */
+[data-theme="dark"] .recharts-tooltip-wrapper {
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
 }
