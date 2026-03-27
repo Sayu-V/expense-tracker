@@ -3,9 +3,11 @@
  * ------------------
  * v1.3.0: Period-aware — month/year driven by PeriodContext.
  * Budget status and form adapt to whichever month the topbar selector is on.
+ * v1.4.0: Auto-refresh every 30 s via useAutoRefresh.
  */
 
 import { useEffect, useState } from 'react'
+import { useAutoRefresh } from '../hooks/useAutoRefresh'
 import { useNavigate } from 'react-router-dom'
 import { budgetsApi, categoriesApi } from '../api/index'
 import { usePeriod } from '../context/PeriodContext'
@@ -13,6 +15,7 @@ import { usePeriod } from '../context/PeriodContext'
 export default function Budgets() {
   const { period } = usePeriod()
   const navigate   = useNavigate()
+  const refreshKey = useAutoRefresh()   // v1.4.0 — auto-refresh every 30 s
 
   const [budgetStatus, setBudgetStatus] = useState([])
   const [categories,   setCategories]   = useState([])
@@ -32,7 +35,8 @@ export default function Budgets() {
     categoriesApi.list({ category_type: 'expense' }).then((r) => setCategories(r.data))
   }, [])
 
-  useEffect(() => { fetchStatus() }, [period.month, period.year])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchStatus() }, [period.month, period.year, refreshKey])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

@@ -10,6 +10,44 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.4.0] — feature/v1.1.0 — 2026-03-27
+
+### Added
+
+**Splash Screen**
+- Version badge updated to `v1.4.0` — always reflects latest release
+- "View on GitHub →" button with GitHub mark SVG linking to `https://github.com/Sayu-V/expense-tracker`
+- Features grid expanded to 10 items including v1.3.0/v1.4.0 features (Edit & Delete, Period selector, Dark mode, Mobile-friendly)
+- Responsive feature grid uses `auto-fill minmax(180px, 1fr)` — two columns on wide screens, one column on narrow/phone screens
+
+**Mobile Responsive (iOS & Android)**
+- `index.html`: added `viewport-fit=cover`, `theme-color`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `mobile-web-app-capable` meta tags — enables full-screen / home-screen app behaviour on both iOS and Android
+- `App.jsx`: hamburger button (`☰`) in topbar — hidden on desktop via CSS, shown on ≤768px screens
+- Sidebar becomes a slide-in drawer on mobile: `translateX(-100%)` by default, `translateX(0)` when `sidebar-open` class is applied
+- Semi-transparent backdrop (`.sidebar-backdrop`) covers main content when drawer is open; tap anywhere to close
+- Sidebar auto-closes when a nav link is tapped (route change effect) or Escape key is pressed
+- Body scroll is locked (`overflow: hidden`) while drawer is open on mobile to prevent accidental page scroll
+- Modals become **bottom sheets** on ≤768px: slide up from bottom, full-width, rounded top corners, respects iOS home indicator via `env(safe-area-inset-bottom)`
+- Topbar reduces padding and shows hamburger on mobile; period selector scrolls horizontally if needed
+- All grid layouts (`.grid-4`, `.grid-3`, `.grid-2`) collapse to single-column on ≤768px
+- Expenses table wrapped in `.table-scroll-wrapper` for horizontal scroll on small screens
+- iOS safe-area insets applied to topbar and page-content via `@supports (padding: env(…))`
+- `touch-action: manipulation` on all interactive elements prevents double-tap zoom on Android/iOS
+- Minimum tap target `min-height: 44px` on action buttons (Apple HIG compliant)
+- Theme preference now persisted in `localStorage` (with sandbox fallback) — survives page refresh
+
+**Auto-Refresh (Real-time Responsiveness)**
+- `hooks/useAutoRefresh.js` — new custom hook returning a `refreshKey` counter that increments every **30 seconds** while the browser tab is visible
+- Pauses polling automatically via `visibilitychange` event when the user switches tabs or minimises the browser; resumes immediately on return
+- Dashboard, Expenses, and Budgets all add `refreshKey` to their `useEffect` dependency arrays — data re-fetches in the background without any user action
+- `.refresh-dot` CSS class: pulsing green dot indicator (can be added to any page title to signal live data)
+
+### Changed
+- Sidebar footer now includes a clickable GitHub link for Sayu-V
+- `App.jsx` version badge in sidebar updated from `v1.3` → `v1.4`
+
+---
+
 ## [1.3.0] — feature/v1.1.0 — 2026-03-27
 
 ### Added

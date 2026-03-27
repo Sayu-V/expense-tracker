@@ -8,9 +8,12 @@
  *   - Category type filtering in form (expense vs income categories)
  *   - AI auto-categorise with entry_type
  *   - Amount range filter
+ * v1.4.0:
+ *   - Auto-refresh every 30 s via useAutoRefresh
  */
 
 import { useEffect, useState, useCallback } from 'react'
+import { useAutoRefresh } from '../hooks/useAutoRefresh'
 import { useSearchParams } from 'react-router-dom'
 import { expensesApi, categoriesApi } from '../api/index'
 import { usePeriod } from '../context/PeriodContext'
@@ -34,6 +37,7 @@ const TYPE_OPTIONS = [
 export default function Expenses() {
   const { period } = usePeriod()
   const [searchParams] = useSearchParams()
+  const refreshKey = useAutoRefresh()   // v1.4.0 — auto-refresh every 30 s
 
   const [expenses,      setExpenses]      = useState([])
   const [allCategories, setAllCategories] = useState([])
@@ -75,7 +79,8 @@ export default function Expenses() {
     if (filterMaxAmount)  params.max_amount   = filterMaxAmount
     if (filterType)       params.type         = filterType
     expensesApi.list(params).then((r) => { setExpenses(r.data); setLoading(false) })
-  }, [filterCategory, filterDateFrom, filterDateTo, filterMinAmount, filterMaxAmount, filterType])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCategory, filterDateFrom, filterDateTo, filterMinAmount, filterMaxAmount, filterType, refreshKey])
 
   useEffect(() => {
     categoriesApi.list().then((r) => setAllCategories(r.data))
@@ -290,6 +295,7 @@ export default function Expenses() {
             No entries found. Try adjusting the filters.
           </div>
         ) : (
+          <div className="table-scroll-wrapper">
           <table>
             <thead>
               <tr>
@@ -333,6 +339,7 @@ export default function Expenses() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

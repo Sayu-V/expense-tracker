@@ -7,9 +7,12 @@
  *   - Income line on Trend chart
  *   - Quote of the Day
  *   - Income / Net Balance cards
+ * v1.4.0:
+ *   - Auto-refresh every 30 s via useAutoRefresh hook (pauses when tab hidden)
  */
 
 import { useEffect, useState } from 'react'
+import { useAutoRefresh } from '../hooks/useAutoRefresh'
 import { useNavigate } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -26,6 +29,7 @@ const SEVERITY_CLASS = { info: 'severity-info', warning: 'severity-warning', ale
 export default function Dashboard() {
   const navigate = useNavigate()
   const { period } = usePeriod()
+  const refreshKey = useAutoRefresh()   // v1.4.0 — auto-refresh every 30 s
 
   const [summary,        setSummary]        = useState(null)
   const [prevSummary,    setPrevSummary]     = useState(null)
@@ -39,7 +43,7 @@ export default function Dashboard() {
   // Quote — stable for the lifetime of this mount
   const [quote] = useState(() => getRandomQuote())
 
-  // ── Data fetch — re-runs every time the period changes ────────────────────
+  // ── Data fetch — re-runs on period change OR auto-refresh tick ────────────
   useEffect(() => {
     setLoading(true)
 
@@ -71,7 +75,8 @@ export default function Dashboard() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [period.dateFrom, period.dateTo])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period.dateFrom, period.dateTo, refreshKey])
 
   // ── Drill-down helpers ────────────────────────────────────────────────────
   const drillToCategory = (categoryId) => {
