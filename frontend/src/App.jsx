@@ -5,18 +5,23 @@
  * v1.5.0: Chat page route.
  * v1.6.0: Collapsible sidebar (desktop) — ← collapse button in sidebar,
  *          hamburger reveals sidebar when collapsed, state in localStorage.
+ * v1.7.0: Recurring Expenses, Spending Alerts (with badge), Goals pages.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
-import Dashboard    from './pages/Dashboard'
-import Expenses     from './pages/Expenses'
-import Budgets      from './pages/Budgets'
-import Categories   from './pages/Categories'
-import Chat         from './pages/Chat'
-import SplashScreen from './components/SplashScreen'
-import PeriodSelector from './components/PeriodSelector'
+import Dashboard          from './pages/Dashboard'
+import Expenses           from './pages/Expenses'
+import Budgets            from './pages/Budgets'
+import Categories         from './pages/Categories'
+import Chat               from './pages/Chat'
+import RecurringExpenses  from './pages/RecurringExpenses'
+import Alerts             from './pages/Alerts'
+import Goals              from './pages/Goals'
+import SplashScreen       from './components/SplashScreen'
+import PeriodSelector     from './components/PeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
+import { alertsApi }      from './api/index'
 import './index.css'
 
 // Pages that show the period selector in the topbar
@@ -78,6 +83,20 @@ function AppShell({ theme, onToggleTheme }) {
   const [sidebarHidden, setSidebarHidden] = useState(
     () => lsGet('et-sidebar-hidden', '0') === '1'
   )
+
+  // v1.7.0 — Unread alert count for sidebar badge
+  const [unreadAlerts, setUnreadAlerts] = useState(0)
+  useEffect(() => {
+    alertsApi.list(false)
+      .then(res => setUnreadAlerts(res.data.unread_count || 0))
+      .catch(() => {})
+    const timer = setInterval(() => {
+      alertsApi.list(false)
+        .then(res => setUnreadAlerts(res.data.unread_count || 0))
+        .catch(() => {})
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   const openMenu  = useCallback(() => setMenuOpen(true),  [])
   const closeMenu = useCallback(() => setMenuOpen(false), [])
@@ -141,7 +160,7 @@ function AppShell({ theme, onToggleTheme }) {
         <div className="sidebar-header">
           <div className="logo">
             💰 Expense Tracker
-            <span className="logo-version">v1.6</span>
+            <span className="logo-version">v1.7</span>
           </div>
         </div>
 
@@ -161,6 +180,32 @@ function AppShell({ theme, onToggleTheme }) {
           </NavLink>
           <NavLink to="/chat" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">💬</span> Chat AI
+          </NavLink>
+
+          <span className="nav-section-label" style={{ marginTop: '0.75rem' }}>v1.7 Features</span>
+          <NavLink to="/recurring" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <span className="nav-icon">🔄</span> Recurring
+          </NavLink>
+          <NavLink to="/alerts" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <span className="nav-icon">🔔</span> Alerts
+            {unreadAlerts > 0 && (
+              <span style={{
+                marginLeft: 'auto',
+                background: 'var(--color-red)',
+                color: '#fff',
+                borderRadius: '999px',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                padding: '1px 6px',
+                minWidth: 18,
+                textAlign: 'center',
+              }}>
+                {unreadAlerts}
+              </span>
+            )}
+          </NavLink>
+          <NavLink to="/goals" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <span className="nav-icon">🏆</span> Goals
           </NavLink>
         </div>
 
@@ -204,6 +249,9 @@ function AppShell({ theme, onToggleTheme }) {
             <Route path="/budgets"    element={<Budgets />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/chat"       element={<Chat />} />
+            <Route path="/recurring"  element={<RecurringExpenses />} />
+            <Route path="/alerts"     element={<Alerts />} />
+            <Route path="/goals"      element={<Goals />} />
           </Routes>
         </div>
       </div>

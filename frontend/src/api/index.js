@@ -33,3 +33,30 @@ export const insightsApi = {
 export const chatApi = {
   send: (message) => client.post('/chat', { message }),
 }
+
+// v1.7.0 — Recurring Expenses
+export const recurringApi = {
+  list:        ()          => client.get('/recurring-expenses'),
+  create:      (data)      => client.post('/recurring-expenses', data),
+  update:      (id, data)  => client.put(`/recurring-expenses/${id}`, data),
+  delete:      (id)        => client.delete(`/recurring-expenses/${id}`),
+  generate:    (id)        => client.post(`/recurring-expenses/${id}/generate`),
+  generateAll: ()          => client.get('/recurring-expenses/generate-all'),
+}
+
+// v1.7.0 — Spending Alerts
+export const alertsApi = {
+  list:       (unreadOnly = false) => client.get('/alerts', { params: { unread_only: unreadOnly } }),
+  generate:   ()                   => client.post('/alerts/generate'),
+  markRead:   (id)                 => client.post(`/alerts/${id}/read`),
+  markAllRead: ()                  => client.post('/alerts/read-all'),
+  delete:     (id)                 => client.delete(`/alerts/${id}`),
+}
+
+// v1.7.0 — Goal Tracker
+export const goalsApi = {
+  list:   ()          => client.get('/goals'),
+  create: (data)      => client.post('/goals', data),
+  update: (id, data)  => client.put(`/goals/${id}`, data),
+  delete: (id)        => client.delete(`/goals/${id}`),
+}

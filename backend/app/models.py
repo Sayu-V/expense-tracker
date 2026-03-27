@@ -6,13 +6,20 @@ to a PostgreSQL table. SQLModel merges Pydantic validation with
 SQLAlchemy ORM — one class does both jobs.
 
 Tables:
-  - Category  → categories
-  - Expense   → expenses
-  - Budget    → budgets
+  - Category          → categories
+  - Expense           → expenses
+  - Budget            → budgets
+  - RecurringExpense  → recurring_expenses  (v1.7.0)
+  - SpendingAlert     → spending_alerts     (v1.7.0)
+  - Goal              → goals               (v1.7.0)
 
 v1.1.0 additions:
   - Category.emoji  — display emoji for category badges (e.g. 🍔 for Food)
   - Expense.type    — 'expense' (default) or 'income' for income tracking
+v1.7.0 additions:
+  - RecurringExpense — recurring expense templates
+  - SpendingAlert    — budget/spend alert notifications
+  - Goal             — savings goal tracker
 """
 
 from datetime import date as Date, datetime
@@ -79,3 +86,76 @@ class Budget(SQLModel, table=True):
     # Foreign key to Category
     category_id: int = Field(foreign_key="categories.id", index=True)
     category: Optional[Category] = Relationship(back_populates="budgets")
+
+
+# ---------------------------------------------------------------------------
+# v1.7.0 — Recurring Expenses
+# ---------------------------------------------------------------------------
+
+class RecurringExpense(SQLModel, table=True):
+    """
+    Template for recurring expenses. Each active row generates real Expense
+    rows whenever its next_date <= today (handled by POST /recurring-expenses/{id}/generate
+    or the batch endpoint POST /recurring-expenses/generate-all).
+
+    frequency: 'daily' | 'weekly' | 'monthly'
+    """
+    __tablename__ = "recurring_expenses"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    amount: float = Field(gt=0)
+    description: str = Field(max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=500)
+    frequency: str = Field(default="monthly", max_length=10)  # daily | weekly | monthly
+    next_date: Date = Field(index=True)                        # Next generation date
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    category_id: int = Field(foreign_key="categories.id", index=True)
+
+
+# ---------------------------------------------------------------------------
+# v1.7.0 — Spending Alerts
+# ---------------------------------------------------------------------------
+
+class SpendingAlert(SQLModel, table=True):
+    """
+    System-generated alert when a budget reaches ≥80% or a category spend
+    spikes vs. the previous month. Alerts can be marked as read.
+
+    alert_type: 'budget_80' | 'budget_over' | 'category_spike'
+    severity:   'info' | 'warning' | 'alert'
+    """
+    __tablename__ = "spending_alerts"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    alert_type: str = Field(max_length=20)   # budget_80 | budget_over | category_spike
+    message: str = Field(max_length=500)
+    severity: str = Field(default="warning", max_length=10)  # info | warning | alert
+    category_id: Optional[int] = Field(default=None, foreign_key="categories.id", index=True)
+    is_read: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ---------------------------------------------------------------------------
+# v1.7.0 — Goal Tracker
+# ---------------------------------------------------------------------------
+
+class Goal(SQLModel, table=True):
+    """
+    Savings or spending goal. Progress is tracked by summing income entries
+    minus expense entries since the goal's start date, compared to target_amount.
+
+    goal_type: 'savings' | 'spending_limit'
+    """
+    __tablename__ = "goals"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=200)
+    description: Optional[str] = Field(default=None, max_length=500)
+    target_amount: float = Field(gt=0)
+    current_amount: float = Field(default=0.0)  # Manually tracked or auto-computed
+    deadline: Optional[Date] = Field(default=None)
+    is_completed: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

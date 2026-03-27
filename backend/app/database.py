@@ -31,7 +31,10 @@ def create_db_and_tables() -> None:
 
     v1.1.0: Also applies additive ALTER TABLE migrations for new columns
     on existing databases so a fresh Docker volume isn't required.
+    v1.7.0: Imports new models so SQLModel.metadata includes them.
     """
+    # Import new v1.7.0 models so their tables are registered in metadata
+    from app.models import RecurringExpense, SpendingAlert, Goal  # noqa: F401
     SQLModel.metadata.create_all(engine)
     _apply_v1_1_0_migrations()
 

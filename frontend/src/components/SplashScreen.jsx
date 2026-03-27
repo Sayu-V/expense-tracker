@@ -27,6 +27,9 @@ const FEATURES = [
   '📱  Mobile-friendly design',
   '💬  Chat with your data',
   '⬇️  Export data to CSV',
+  '🔄  Recurring expenses',
+  '🔔  Spending alerts',
+  '🏆  Savings goal tracker',
 ]
 
 const SPLASH_DURATION = 3000  // ms before auto-dismiss
@@ -105,7 +108,7 @@ export default function SplashScreen({ onDismiss }) {
           letterSpacing: '0.5px',
           marginBottom: '1.25rem',
         }}>
-          v1.6.0
+          v1.7.0
         </span>
 
         {/* Feature list — 2 cols on wide, 1 col on narrow */}

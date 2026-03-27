@@ -19,7 +19,7 @@ from sqlmodel import Session, select
 from app.config import settings
 from app.database import create_db_and_tables, engine
 from app.models import Category
-from app.routers import expenses, categories, budgets, reports, insights, chat
+from app.routers import expenses, categories, budgets, reports, insights, chat, recurring, alerts, goals
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="Personal finance tracking with FastAPI, SQLModel, and PostgreSQL",
-    version="1.5.0",
+    version="1.7.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
@@ -122,6 +122,9 @@ app.include_router(budgets.router,    prefix="/api/v1")
 app.include_router(reports.router,    prefix="/api/v1")
 app.include_router(insights.router,   prefix="/api/v1")
 app.include_router(chat.router,       prefix="/api/v1")   # v1.5.0
+app.include_router(recurring.router,  prefix="/api/v1")   # v1.7.0
+app.include_router(alerts.router,     prefix="/api/v1")   # v1.7.0
+app.include_router(goals.router,      prefix="/api/v1")   # v1.7.0
 
 
 # ---------------------------------------------------------------------------
@@ -131,4 +134,4 @@ app.include_router(chat.router,       prefix="/api/v1")   # v1.5.0
 @app.get("/health", tags=["Health"])
 def health_check():
     """Quick liveness check — Docker healthcheck hits this."""
-    return {"status": "ok", "version": "1.2.0"}
+    return {"status": "ok", "version": "1.7.0"}

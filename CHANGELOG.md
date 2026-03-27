@@ -10,6 +10,51 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.7.0] — feature/v1.1.0 — 2026-03-28
+
+### Added
+
+**Recurring Expenses**
+- New `RecurringExpense` DB table — stores recurring expense templates with `frequency` (daily / weekly / monthly) and `next_date`
+- `POST /api/v1/recurring-expenses` — create template; `PUT /{id}` — edit; `DELETE /{id}` — remove
+- `POST /api/v1/recurring-expenses/{id}/generate` — generate Expense rows from `next_date` up to today, then advance `next_date`
+- `GET /api/v1/recurring-expenses/generate-all` — batch-generate for all active templates due today
+- `python-dateutil` `relativedelta` used for correct month-end date arithmetic
+- `RecurringExpenses.jsx` — table of templates with frequency badge, next-date warning (⚠️ if overdue), ⚡ Run, pause/resume toggle, edit, delete
+- "⚡ Generate All Due" button processes all overdue templates at once
+
+**Spending Alerts**
+- New `SpendingAlert` DB table — stores budget threshold and category spike alerts with `severity` (info / warning / alert) and `is_read`
+- Alert types: `budget_80` (≥80% of monthly budget used), `budget_over` (100%+ exceeded), `category_spike` (this month > 1.5× last month, min ₹100 baseline)
+- `POST /api/v1/alerts/generate` — idempotent: computes alerts for current month without duplicating existing ones
+- `POST /api/v1/alerts/{id}/read` and `POST /api/v1/alerts/read-all` — mark as read
+- `DELETE /api/v1/alerts/{id}` — dismiss a single alert
+- `Alerts.jsx` — alert cards with severity colour coding (red/amber/blue), type badge, unread dot, mark-read and dismiss buttons, "Check Now" trigger, unread-only filter
+- Sidebar shows a red badge counter for unread alerts; auto-refreshes every 60s
+
+**Goal Tracker**
+- New `Goal` DB table — stores name, description, target amount, current amount, optional deadline, completed flag
+- Progress computed server-side: `percent_complete`, `remaining_amount`, `projected_completion_date` (extrapolated from average daily save rate), `days_remaining`
+- `PUT /api/v1/goals/{id}` — update including `current_amount`; auto-marks `is_completed` when `current ≥ target`
+- `Goals.jsx` — animated SVG progress ring per goal, flat progress bar with amounts, projected date vs deadline comparison, "＋ Add Savings" quick-modal, filter tabs (All / Active / Completed)
+- Summary strip: total goals count, total amount saved, overall percentage progress bar
+
+**API**
+- `recurringApi`, `alertsApi`, `goalsApi` added to `frontend/src/api/index.js`
+- Three new sidebar nav sections under "v1.7 Features": 🔄 Recurring, 🔔 Alerts, 🏆 Goals
+- Sidebar logo version badge `v1.6` → `v1.7`
+
+### Changed
+- `backend/app/models.py` — three new SQLModel table classes; `database.py` imports them before `create_all` so tables are created on first Docker start
+- `backend/app/main.py` — registers `recurring`, `alerts`, `goals` routers; version bumped to `1.7.0`
+- `frontend/src/index.css` — added `.btn-sm`, `.badge-success`, `.badge-neutral` utility classes
+- Splash screen feature list expanded with Recurring, Alerts, Goals; version badge → `v1.7.0`
+
+### Tests
+- All 12 existing pytest tests pass (new tables use in-memory SQLite StaticPool, backward-compatible)
+
+---
+
 ## [1.6.0] — feature/v1.1.0 — 2026-03-27
 
 ### Added

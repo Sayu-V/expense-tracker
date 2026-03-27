@@ -75,6 +75,21 @@ function readColors() {
 
     /** Stroke for pie chart label lines */
     labelLineStroke: textTertiary,
+
+    /**
+     * Pass to <Tooltip labelStyle={ct.tooltipLabelStyle} />
+     * Fixes: Recharts renders the label text with its own inline style
+     * that overrides CSS cascading from contentStyle — this ensures the
+     * label (category / axis key) uses the correct resolved colour.
+     */
+    tooltipLabelStyle: { color: textPrimary, fontWeight: 600 },
+
+    /**
+     * Pass to <Tooltip itemStyle={ct.tooltipItemStyle} />
+     * Fixes: each row in the tooltip (the value lines) has its own
+     * inline style that must be set explicitly for dark mode.
+     */
+    tooltipItemStyle: { color: textSecondary },
   }
 }
 

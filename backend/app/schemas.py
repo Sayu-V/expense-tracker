@@ -249,6 +249,189 @@ class ChatResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# v1.7.0 — Recurring Expense schemas
+# ---------------------------------------------------------------------------
+
+class RecurringExpenseCreate(BaseModel):
+    amount: float
+    category_id: int
+    description: str
+    notes: Optional[str] = None
+    frequency: str = "monthly"   # daily | weekly | monthly
+    next_date: date
+
+    @field_validator("amount")
+    @classmethod
+    def amount_must_be_positive(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("amount must be greater than 0")
+        return round(v, 2)
+
+    @field_validator("frequency")
+    @classmethod
+    def frequency_must_be_valid(cls, v: str) -> str:
+        if v not in ("daily", "weekly", "monthly"):
+            raise ValueError("frequency must be 'daily', 'weekly', or 'monthly'")
+        return v
+
+    @field_validator("description")
+    @classmethod
+    def description_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("description cannot be blank")
+        return v.strip()
+
+
+class RecurringExpenseUpdate(BaseModel):
+    amount: Optional[float] = None
+    category_id: Optional[int] = None
+    description: Optional[str] = None
+    notes: Optional[str] = None
+    frequency: Optional[str] = None
+    next_date: Optional[date] = None
+    is_active: Optional[bool] = None
+
+    @field_validator("amount")
+    @classmethod
+    def amount_must_be_positive(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v <= 0:
+            raise ValueError("amount must be greater than 0")
+        return round(v, 2) if v is not None else None
+
+
+class RecurringExpenseRead(BaseModel):
+    id: int
+    amount: float
+    category_id: int
+    category: Optional[CategoryRead] = None
+    description: str
+    notes: Optional[str] = None
+    frequency: str
+    next_date: date
+    is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class GenerateResult(BaseModel):
+    """Result of generating expenses from a recurring template."""
+    recurring_id: int
+    generated_count: int
+    expense_ids: list[int]
+
+
+# ---------------------------------------------------------------------------
+# v1.7.0 — Spending Alert schemas
+# ---------------------------------------------------------------------------
+
+class SpendingAlertRead(BaseModel):
+    id: int
+    alert_type: str
+    message: str
+    severity: str
+    category_id: Optional[int] = None
+    is_read: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AlertsResponse(BaseModel):
+    alerts: list[SpendingAlertRead]
+    unread_count: int
+
+
+# ---------------------------------------------------------------------------
+# v1.7.0 — Goal schemas
+# ---------------------------------------------------------------------------
+
+class GoalCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    target_amount: float
+    current_amount: float = 0.0
+    deadline: Optional[date] = None
+
+    @field_validator("target_amount")
+    @classmethod
+    def target_must_be_positive(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("target_amount must be greater than 0")
+        return round(v, 2)
+
+    @field_validator("current_amount")
+    @classmethod
+    def current_non_negative(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError("current_amount cannot be negative")
+        return round(v, 2)
+
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("name cannot be blank")
+        return v.strip()
+
+
+class GoalUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    target_amount: Optional[float] = None
+    current_amount: Optional[float] = None
+    deadline: Optional[date] = None
+    is_completed: Optional[bool] = None
+
+    @field_validator("target_amount")
+    @classmethod
+    def target_must_be_positive(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v <= 0:
+            raise ValueError("target_amount must be greater than 0")
+        return round(v, 2) if v is not None else None
+
+    @field_validator("current_amount")
+    @classmethod
+    def current_non_negative(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError("current_amount cannot be negative")
+        return round(v, 2) if v is not None else None
+
+
+class GoalRead(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    target_amount: float
+    current_amount: float
+    deadline: Optional[date] = None
+    is_completed: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class GoalProgress(BaseModel):
+    """Extended goal read with computed progress fields."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    target_amount: float
+    current_amount: float
+    deadline: Optional[date] = None
+    is_completed: bool
+    created_at: datetime
+    updated_at: datetime
+    percent_complete: float           # 0–100
+    remaining_amount: float           # target - current (0 if over)
+    projected_completion_date: Optional[date] = None   # None if no deadline or no progress
+    days_remaining: Optional[int] = None               # None if no deadline
+
+    model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
 # Reports schemas
 # ---------------------------------------------------------------------------
 
