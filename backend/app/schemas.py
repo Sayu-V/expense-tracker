@@ -189,8 +189,21 @@ class BudgetRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class BudgetUpdate(BaseModel):
+    """v1.5.0 — update a budget's amount."""
+    amount: float
+
+    @field_validator("amount")
+    @classmethod
+    def amount_must_be_positive(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("budget amount must be greater than 0")
+        return round(v, 2)
+
+
 class BudgetStatus(BaseModel):
     """Response model for GET /budgets/status — actual vs budgeted spend."""
+    budget_id: int = 0         # v1.5.0: added so frontend can PATCH/DELETE by ID
     category_id: int
     category_name: str
     category_color: str
@@ -199,6 +212,40 @@ class BudgetStatus(BaseModel):
     remaining: float
     percent_used: float
     is_over_budget: bool
+
+
+# ---------------------------------------------------------------------------
+# v1.5.0 — Bulk delete schema (shared by expenses and budgets)
+# ---------------------------------------------------------------------------
+
+class BulkDeleteRequest(BaseModel):
+    """Request body for bulk delete endpoints."""
+    ids: list[int]
+
+
+# ---------------------------------------------------------------------------
+# v1.5.0 — Chat schemas
+# ---------------------------------------------------------------------------
+
+class ChatMessage(BaseModel):
+    """Request body for POST /chat."""
+    message: str
+
+
+class ChatDataPoint(BaseModel):
+    """A single point in the chart_data array returned by the chat service."""
+    label: str
+    value: float
+    color: Optional[str] = "#5E5CE6"
+
+
+class ChatResponse(BaseModel):
+    """Structured response from the chat service."""
+    answer: str                       # Markdown-flavoured text answer
+    chart_type: str = "none"          # 'pie' | 'bar' | 'line' | 'none'
+    chart_data: list[ChatDataPoint] = []
+    chart_title: str = ""
+    quick_replies: list[str] = []     # Suggested follow-up chips
 
 
 # ---------------------------------------------------------------------------

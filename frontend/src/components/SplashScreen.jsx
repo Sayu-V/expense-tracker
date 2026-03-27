@@ -25,6 +25,8 @@ const FEATURES = [
   '📅  Week / Month / Quarter / Year',
   '🌙  Light & dark theme',
   '📱  Mobile-friendly design',
+  '💬  Chat with your data',
+  '⬇️  Export data to CSV',
 ]
 
 const SPLASH_DURATION = 3000  // ms before auto-dismiss
@@ -103,7 +105,7 @@ export default function SplashScreen({ onDismiss }) {
           letterSpacing: '0.5px',
           marginBottom: '1.25rem',
         }}>
-          v1.4.0
+          v1.5.0
         </span>
 
         {/* Feature list — 2 cols on wide, 1 col on narrow */}

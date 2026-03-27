@@ -6,6 +6,9 @@
  *   - Sidebar auto-closes when a nav link is tapped on mobile
  *   - Version badge updated to v1.4
  *   - Persistent theme preference via localStorage (with fallback)
+ * v1.5.0:
+ *   - Chat page added (💬 Chat with your data)
+ *   - Version badge updated to v1.5
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -14,6 +17,7 @@ import Dashboard    from './pages/Dashboard'
 import Expenses     from './pages/Expenses'
 import Budgets      from './pages/Budgets'
 import Categories   from './pages/Categories'
+import Chat         from './pages/Chat'
 import SplashScreen from './components/SplashScreen'
 import PeriodSelector from './components/PeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
@@ -102,7 +106,7 @@ function AppShell({ theme, onToggleTheme }) {
         <div className="sidebar-header">
           <div className="logo">
             💰 Expense Tracker
-            <span className="logo-version">v1.4</span>
+            <span className="logo-version">v1.5</span>
           </div>
         </div>
 
@@ -120,6 +124,9 @@ function AppShell({ theme, onToggleTheme }) {
           </NavLink>
           <NavLink to="/categories" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">🏷️</span> Categories
+          </NavLink>
+          <NavLink to="/chat" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <span className="nav-icon">💬</span> Chat AI
           </NavLink>
         </div>
 
@@ -148,6 +155,7 @@ function AppShell({ theme, onToggleTheme }) {
             <Route path="/expenses"   element={<Expenses />} />
             <Route path="/budgets"    element={<Budgets />} />
             <Route path="/categories" element={<Categories />} />
+            <Route path="/chat"       element={<Chat />} />
           </Routes>
         </div>
       </div>

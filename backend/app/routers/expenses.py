@@ -6,6 +6,7 @@ Routes:
   POST   /api/v1/expenses
   GET    /api/v1/expenses
   GET    /api/v1/expenses/suggest-category  (v1.1.0)
+  POST   /api/v1/expenses/bulk-delete       (v1.5.0)
   GET    /api/v1/expenses/{id}
   PUT    /api/v1/expenses/{id}
   DELETE /api/v1/expenses/{id}
@@ -17,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.database import get_session
-from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead, SuggestCategoryResponse
+from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead, SuggestCategoryResponse, BulkDeleteRequest
 from app.services.expense_service import (
     create_expense,
     get_expense_by_id,
@@ -54,6 +55,16 @@ def suggest_category_endpoint(
         suggested_category_emoji=category.emoji if category else None,
         confidence=confidence,
     )
+
+
+@router.post("/bulk-delete", status_code=200)
+def bulk_delete(payload: BulkDeleteRequest, session: Session = Depends(get_session)):
+    """v1.5.0 — Delete multiple expense records by ID list."""
+    deleted = 0
+    for eid in payload.ids:
+        if delete_expense(session, eid):
+            deleted += 1
+    return {"deleted": deleted}
 
 
 @router.get("", response_model=list[ExpenseRead])

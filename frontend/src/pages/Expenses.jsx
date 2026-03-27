@@ -10,10 +10,14 @@
  *   - Amount range filter
  * v1.4.0:
  *   - Auto-refresh every 30 s via useAutoRefresh
+ * v1.5.0:
+ *   - Bulk-select checkboxes + "Delete selected" action
+ *   - Export CSV of current filtered view
  */
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAutoRefresh } from '../hooks/useAutoRefresh'
+import { exportCsv } from '../utils/exportCsv'
 import { useSearchParams } from 'react-router-dom'
 import { expensesApi, categoriesApi } from '../api/index'
 import { usePeriod } from '../context/PeriodContext'
@@ -44,6 +48,7 @@ export default function Expenses() {
   const [loading,       setLoading]       = useState(true)
   const [showForm,      setShowForm]      = useState(false)
   const [editTarget,    setEditTarget]    = useState(null)  // expense being edited
+  const [selected,      setSelected]      = useState(new Set()) // v1.5.0 bulk select
 
   // ── Filters — initialised from URL params (drill-down) ────────────────────
   const [filterCategory,  setFilterCategory]  = useState(searchParams.get('category_id') || '')
@@ -132,6 +137,35 @@ export default function Expenses() {
     fetchExpenses()
   }
 
+  // ── v1.5.0 Bulk actions ───────────────────────────────────────────────────
+  const allIds      = expenses.map((e) => e.id)
+  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id))
+
+  const toggleAll = () =>
+    setSelected(allSelected ? new Set() : new Set(allIds))
+
+  const toggleOne = (id) =>
+    setSelected((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return
+    if (!window.confirm(`Delete ${selected.size} selected entry/entries?`)) return
+    await expensesApi.bulkDelete([...selected])
+    setSelected(new Set())
+    fetchExpenses()
+  }
+
+  const handleExport = () => {
+    exportCsv(`expenses-${filterDateFrom || 'all'}-to-${filterDateTo || 'all'}`, expenses, [
+      { key: 'date',        label: 'Date' },
+      { key: 'description', label: 'Description' },
+      { key: (e) => getCategoryLabel(e.category_id), label: 'Category' },
+      { key: 'type',        label: 'Type' },
+      { key: 'amount',      label: 'Amount (₹)' },
+      { key: (e) => e.notes || '', label: 'Notes' },
+    ])
+  }
+
   const clearFilters = () => {
     setFilterCategory(''); setFilterDateFrom(period.dateFrom); setFilterDateTo(period.dateTo)
     setFilterMinAmount(''); setFilterMaxAmount(''); setFilterType('')
@@ -157,11 +191,21 @@ export default function Expenses() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <h1 className="page-title" style={{ margin: 0 }}>Expenses</h1>
-        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : '+ Add Entry'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {selected.size > 0 && (
+            <button className="btn-danger" onClick={handleBulkDelete}>
+              🗑 Delete {selected.size} selected
+            </button>
+          )}
+          <button className="btn-secondary" onClick={handleExport} disabled={expenses.length === 0}>
+            ⬇️ Export CSV
+          </button>
+          <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? 'Cancel' : '+ Add Entry'}
+          </button>
+        </div>
       </div>
 
       {/* ── Add form ── */}
@@ -299,6 +343,9 @@ export default function Expenses() {
           <table>
             <thead>
               <tr>
+                <th style={{ width: '36px' }}>
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ width: 'auto' }} title="Select all" />
+                </th>
                 <th>Date</th>
                 <th>Type</th>
                 <th>Description</th>
@@ -310,7 +357,10 @@ export default function Expenses() {
             </thead>
             <tbody>
               {expenses.map((e) => (
-                <tr key={e.id}>
+                <tr key={e.id} style={{ background: selected.has(e.id) ? 'var(--accent-light)' : undefined }}>
+                  <td onClick={(ev) => ev.stopPropagation()}>
+                    <input type="checkbox" checked={selected.has(e.id)} onChange={() => toggleOne(e.id)} style={{ width: 'auto' }} />
+                  </td>
                   <td style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{e.date}</td>
                   <td>
                     <span className={`badge badge-${e.type}`}>

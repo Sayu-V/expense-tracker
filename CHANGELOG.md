@@ -10,6 +10,38 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.5.0] — feature/v1.1.0 — 2026-03-27
+
+### Added
+
+**Edit & Delete Budgets**
+- `PUT /api/v1/budgets/{id}` — update a budget's amount (`BudgetUpdate` schema)
+- `DELETE /api/v1/budgets/{id}` — delete a single budget (204 No Content)
+- `EditBudgetModal` in Budgets page — modal to change the amount for any budget row
+- ✏️ Edit and 🗑 Delete action buttons on every budget row; `budget_id` now returned by `/budgets/status`
+
+**Bulk-Select Delete (Expenses & Budgets)**
+- `POST /api/v1/expenses/bulk-delete` and `POST /api/v1/budgets/bulk-delete` — delete multiple records by ID list
+- Checkboxes on every row; "Select all" header checkbox; "🗑 Delete N selected" action button appears inline
+- Selected rows highlighted with accent-light background; selection cleared after deletion
+
+**Export to CSV**
+- `utils/exportCsv.js` — client-side export; BOM prefix for Excel compatibility; supports function-key column definitions
+- ⬇️ Export CSV buttons on both Expenses (date/description/category/type/amount/notes) and Budgets (budget vs actual)
+
+**Chat with your Data (AI Insights)**
+- `services/chat_service.py` — keyword-based NLP; no external API; period detection (this month / last week / in January / this year / today)
+- Supported intents: total spend, category breakdown, specific category, income vs expenses, savings rate, 6-month trend, budget status, top-5 expenses
+- `routers/chat.py` — `POST /api/v1/chat`; `ChatMessage` / `ChatResponse` / `ChatDataPoint` schemas in `schemas.py`
+- `pages/Chat.jsx` — chat bubbles, typing indicator (3 pulsing dots), inline Recharts (pie/bar/line), markdown-lite renderer, quick-reply chips, auto-scroll, auto-expanding textarea, Enter to send
+- 💬 Chat AI nav link added to sidebar
+
+**General**
+- Splash screen version badge → `v1.5.0`; feature grid updated with Chat AI and Export CSV entries
+- Sidebar logo version badge → `v1.5`
+
+---
+
 ## [1.4.0] — feature/v1.1.0 — 2026-03-27
 
 ### Added

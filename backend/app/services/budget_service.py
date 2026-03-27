@@ -8,7 +8,7 @@ from datetime import date
 from sqlmodel import Session, select, func
 
 from app.models import Budget, Expense, Category
-from app.schemas import BudgetCreate, BudgetRead, BudgetStatus
+from app.schemas import BudgetCreate, BudgetRead, BudgetStatus, BudgetUpdate
 
 
 def create_or_update_budget(session: Session, payload: BudgetCreate) -> Budget:
@@ -97,6 +97,7 @@ def get_budget_status(session: Session, month: int, year: int) -> list[BudgetSta
         category = session.get(Category, budget.category_id)
 
         result.append(BudgetStatus(
+            budget_id=budget.id,           # v1.5.0: expose ID for edit/delete
             category_id=budget.category_id,
             category_name=category.name if category else "Unknown",
             category_color=category.color if category else "#6b7280",
@@ -108,3 +109,42 @@ def get_budget_status(session: Session, month: int, year: int) -> list[BudgetSta
         ))
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# v1.5.0 — Edit & delete individual budgets
+# ---------------------------------------------------------------------------
+
+def update_budget(session: Session, budget_id: int, payload: BudgetUpdate):
+    """Update the amount for an existing budget."""
+    from fastapi import HTTPException
+    budget = session.get(Budget, budget_id)
+    if not budget:
+        raise HTTPException(status_code=404, detail=f"Budget {budget_id} not found")
+    budget.amount = payload.amount
+    session.add(budget)
+    session.commit()
+    session.refresh(budget)
+    return budget
+
+
+def delete_budget(session: Session, budget_id: int) -> bool:
+    """Delete a budget by ID. Returns True if deleted, False if not found."""
+    budget = session.get(Budget, budget_id)
+    if not budget:
+        return False
+    session.delete(budget)
+    session.commit()
+    return True
+
+
+def bulk_delete_budgets(session: Session, ids: list[int]) -> int:
+    """Delete multiple budgets by ID list. Returns count of deleted records."""
+    deleted = 0
+    for bid in ids:
+        budget = session.get(Budget, bid)
+        if budget:
+            session.delete(budget)
+            deleted += 1
+    session.commit()
+    return deleted
