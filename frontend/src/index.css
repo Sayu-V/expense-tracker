@@ -1146,12 +1146,12 @@ button, a, select, input[type="checkbox"], input[type="radio"] {
   --shadow-lg:  0 12px 48px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.1) inset;
 }
 
-/* Ensure sidebar and content sit above the orb layer (z-index 0) */
-[data-theme="galaxy"] .sidebar,
-[data-theme="galaxy"] .main-content {
-  position: relative;
-  z-index: 1;
-}
+/* Ensure sidebar/content sit above the orb layer (z-index 0).
+   Only z-index — never override position here or it breaks
+   the base position:fixed on .sidebar and ruins scrolling. */
+[data-theme="galaxy"] .sidebar      { z-index: 100; }
+[data-theme="galaxy"] .topbar       { z-index: 50;  }
+[data-theme="galaxy"] .main-content { z-index: 1;   }
 
 /* Deep space gradient on the body itself */
 [data-theme="galaxy"] body {
