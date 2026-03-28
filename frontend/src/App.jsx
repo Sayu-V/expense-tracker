@@ -10,21 +10,20 @@
  * v1.9.0: Version badge updated; rich emoji picker for categories.
  * v2.0.0: Bank statement import (PDF + CSV), income sources, new categories.
  * v2.1.0: Import Rules engine — user-defined auto-classification rules.
+ * v2.3.0: Sidebar consolidation — Categories, Import, Import Rules, Feature
+ *          Updates merged into a single ⚙️ Settings hub.
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import Dashboard          from './pages/Dashboard'
 import Expenses           from './pages/Expenses'
 import Budgets            from './pages/Budgets'
-import Categories         from './pages/Categories'
 import Chat               from './pages/Chat'
 import RecurringExpenses  from './pages/RecurringExpenses'
 import Alerts             from './pages/Alerts'
 import Goals              from './pages/Goals'
-import Import             from './pages/Import'
-import ImportRules        from './pages/ImportRules'
-import FeatureUpdates     from './pages/FeatureUpdates'
+import Settings           from './pages/Settings'
 import SplashScreen       from './components/SplashScreen'
 import PeriodSelector     from './components/PeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
@@ -217,7 +216,7 @@ function AppShell({ theme, onToggleTheme }) {
         <div className="sidebar-header">
           <div className="logo">
             💰 Expense Tracker
-            <span className="logo-version">v2.2</span>
+            <span className="logo-version">v2.3</span>
           </div>
         </div>
 
@@ -231,9 +230,6 @@ function AppShell({ theme, onToggleTheme }) {
           </NavLink>
           <NavLink to="/budgets" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">🎯</span> Budgets
-          </NavLink>
-          <NavLink to="/categories" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <span className="nav-icon">🏷️</span> Categories
           </NavLink>
           <NavLink to="/chat" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">💬</span> Chat AI
@@ -262,14 +258,8 @@ function AppShell({ theme, onToggleTheme }) {
           <NavLink to="/goals" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">🏆</span> Goals
           </NavLink>
-          <NavLink to="/import" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <span className="nav-icon">📥</span> Import
-          </NavLink>
-          <NavLink to="/import-rules" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <span className="nav-icon">🏷️</span> Import Rules
-          </NavLink>
-          <NavLink to="/features" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <span className="nav-icon">✨</span> Feature Updates
+          <NavLink to="/settings" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <span className="nav-icon">⚙️</span> Settings
           </NavLink>
         </div>
 
@@ -311,14 +301,16 @@ function AppShell({ theme, onToggleTheme }) {
             <Route path="/"           element={<Dashboard />} />
             <Route path="/expenses"   element={<Expenses />} />
             <Route path="/budgets"    element={<Budgets />} />
-            <Route path="/categories" element={<Categories />} />
             <Route path="/chat"       element={<Chat />} />
             <Route path="/recurring"  element={<RecurringExpenses />} />
             <Route path="/alerts"     element={<Alerts />} />
             <Route path="/goals"      element={<Goals />} />
-            <Route path="/import"        element={<Import />} />
-            <Route path="/import-rules"  element={<ImportRules />} />
-            <Route path="/features"      element={<FeatureUpdates />} />
+            <Route path="/settings"   element={<Settings />} />
+            {/* Legacy redirects — old direct links still work */}
+            <Route path="/categories"  element={<Navigate to="/settings?tab=categories"  replace />} />
+            <Route path="/import"      element={<Navigate to="/settings?tab=import"       replace />} />
+            <Route path="/import-rules" element={<Navigate to="/settings?tab=import-rules" replace />} />
+            <Route path="/features"    element={<Navigate to="/settings?tab=whats-new"   replace />} />
           </Routes>
         </div>
       </div>
