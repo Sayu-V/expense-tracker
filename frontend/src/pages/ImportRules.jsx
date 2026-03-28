@@ -213,9 +213,23 @@ function ActionRow({ action, index, onChange, onRemove, categories }) {
 }
 
 // ── RuleForm ──────────────────────────────────────────────────────────────────
+const PRIORITY_OPTIONS = [
+  { value: 1,  label: '1 — Highest' },
+  { value: 2,  label: '2' },
+  { value: 3,  label: '3' },
+  { value: 4,  label: '4' },
+  { value: 5,  label: '5 — Normal'  },
+  { value: 6,  label: '6' },
+  { value: 7,  label: '7' },
+  { value: 8,  label: '8' },
+  { value: 9,  label: '9' },
+  { value: 10, label: '10 — Low'    },
+]
+
 function RuleForm({ initial, categories, onSave, onCancel }) {
   const [name,       setName]       = useState(initial?.name || '')
   const [priority,   setPriority]   = useState(initial?.priority ?? 5)
+  const [isActive,   setIsActive]   = useState(initial?.is_active ?? true)
   const [logic,      setLogic]      = useState(initial?.condition_logic || 'OR')
   const [conditions, setConditions] = useState(initial?.conditions?.length ? initial.conditions : [emptyCondition()])
   const [actions,    setActions]    = useState(initial?.actions?.length    ? initial.actions    : [emptyAction()])
@@ -250,7 +264,7 @@ function RuleForm({ initial, categories, onSave, onCancel }) {
     if (!actions.length)    { setError('Add at least one action'); return }
     setSaving(true); setError(null)
     try {
-      await onSave({ name: name.trim(), priority: Number(priority), condition_logic: logic, conditions, actions, apply_retroactive: retro })
+      await onSave({ name: name.trim(), priority: Number(priority), is_active: isActive, condition_logic: logic, conditions, actions, apply_retroactive: retro })
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to save rule')
     } finally {
@@ -264,18 +278,34 @@ function RuleForm({ initial, categories, onSave, onCancel }) {
         {initial ? '✏️ Edit Rule' : '✚ Create Categorisation Rule'}
       </div>
 
-      {/* Name + Priority */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '0.75rem', marginBottom: '0.75rem' }}>
+      {/* Name + Priority + Active */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px auto', gap: '0.75rem', marginBottom: '0.75rem', alignItems: 'end' }}>
         <label style={labelStyle}>
           Rule Name *
           <input value={name} onChange={e => setName(e.target.value)}
             placeholder="e.g. Zomato → Food & Dining" style={inputStyle} />
         </label>
         <label style={labelStyle}>
-          Priority <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>(1 = highest)</span>
-          <input type="number" value={priority} min="1" max="100"
-            onChange={e => setPriority(e.target.value)} style={inputStyle} />
+          Priority
+          <select value={priority} onChange={e => setPriority(Number(e.target.value))} style={inputStyle}>
+            {PRIORITY_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
         </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 2 }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-text)' }}>Active</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} />
+              <span className="track" />
+              <span className="knob" />
+            </label>
+            <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+              {isActive ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Conditions */}
