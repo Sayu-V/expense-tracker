@@ -24,6 +24,7 @@ import Alerts             from './pages/Alerts'
 import Goals              from './pages/Goals'
 import Import             from './pages/Import'
 import ImportRules        from './pages/ImportRules'
+import FeatureUpdates     from './pages/FeatureUpdates'
 import SplashScreen       from './components/SplashScreen'
 import PeriodSelector     from './components/PeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
@@ -217,6 +218,9 @@ function AppShell({ theme, onToggleTheme }) {
           <NavLink to="/import-rules" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">🏷️</span> Import Rules
           </NavLink>
+          <NavLink to="/features" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <span className="nav-icon">✨</span> Feature Updates
+          </NavLink>
         </div>
 
         <div className="sidebar-footer">
@@ -264,6 +268,7 @@ function AppShell({ theme, onToggleTheme }) {
             <Route path="/goals"      element={<Goals />} />
             <Route path="/import"        element={<Import />} />
             <Route path="/import-rules"  element={<ImportRules />} />
+            <Route path="/features"      element={<FeatureUpdates />} />
           </Routes>
         </div>
       </div>

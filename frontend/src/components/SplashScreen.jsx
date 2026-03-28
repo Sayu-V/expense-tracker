@@ -1,14 +1,13 @@
 /**
  * components/SplashScreen.jsx
  * ----------------------------
- * v2.2.0 — Animated splash screen shown on every app load.
+ * v2.2.0 — Minimal 3D splash: quote · app name · version.
  *
- * Behaviour:
- *   - Displays for ~7 seconds then auto-dismisses
- *   - "Skip" button lets the user dismiss immediately
- *   - Rotating financial quote at the top
- *   - Kanban-style feature board organised by category
- *   - Pure CSS animation — no external libs needed
+ * Visual effects:
+ *   - Deep perspective background with floating orbs
+ *   - Glass-morphism card with CSS 3D float + tilt animation
+ *   - Subtle inner glow and shimmer on the card border
+ *   - Progress bar auto-dismiss after SPLASH_DURATION ms
  */
 
 import { useEffect, useState } from 'react'
@@ -24,78 +23,14 @@ const QUOTES = [
   { text: 'The habit of saving is itself an education; it fosters every virtue, teaches self-denial, cultivates the sense of order.', author: 'T.T. Munger' },
 ]
 
-// Kanban board: each column = a feature category
-const KANBAN = [
-  {
-    title: 'Core Tracking',
-    icon: '📊',
-    color: '#6366F1',
-    items: [
-      '📊  Track expenses & income',
-      '✏️  Edit & delete entries',
-      '📅  Week / Month / Quarter / Year',
-      '🔄  Recurring expenses',
-      '⬇️  Export data to CSV',
-    ],
-  },
-  {
-    title: 'Budgets & Goals',
-    icon: '🎯',
-    color: '#10B981',
-    items: [
-      '🎯  Budget per category',
-      '🏆  Savings goal tracker',
-      '🔔  Spending alerts',
-      '💱  Income vs expense balance',
-    ],
-  },
-  {
-    title: 'Analytics',
-    icon: '📈',
-    color: '#F59E0B',
-    items: [
-      '📈  Monthly trend charts',
-      '💡  Smart spending insights',
-      '📊  Year-over-year comparison',
-      '🔮  Predicted monthly spend',
-    ],
-  },
-  {
-    title: 'AI & Import',
-    icon: '🤖',
-    color: '#EC4899',
-    items: [
-      '🤖  AI auto-categorisation',
-      '💬  Chat with your data',
-      '📥  Bank statement import (PDF & CSV)',
-      '⚙️  Import Rules — smart auto-categorisation',
-      '🏷️  Income sources & auto-classification',
-    ],
-  },
-  {
-    title: 'Design & Tech',
-    icon: '🎨',
-    color: '#8B5CF6',
-    items: [
-      '🌙  Light & dark theme',
-      '📱  Mobile-friendly design',
-      '😀  Rich emoji category picker',
-      '📶  PWA offline mode',
-      '📄  Cursor-based pagination',
-    ],
-  },
-]
-
-const SPLASH_DURATION = 7000  // ms before auto-dismiss
+const SPLASH_DURATION = 7000
 
 export default function SplashScreen({ onDismiss }) {
-  const [progress, setProgress] = useState(0)
-  const [visible, setVisible] = useState(true)
-  // Pick a random quote on mount
-  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)])
+  const [progress, setProgress]   = useState(0)
+  const [visible,  setVisible]    = useState(true)
+  const [quote]                   = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)])
 
   useEffect(() => {
-    // Progress bar animation
     const step = 100 / (SPLASH_DURATION / 50)
     const interval = setInterval(() => {
       setProgress((p) => {
@@ -103,19 +38,16 @@ export default function SplashScreen({ onDismiss }) {
         return p + step
       })
     }, 50)
-
-    // Auto-dismiss after duration
     const timer = setTimeout(() => {
       setVisible(false)
-      setTimeout(onDismiss, 400)  // wait for fade-out
+      setTimeout(onDismiss, 500)
     }, SPLASH_DURATION)
-
     return () => { clearInterval(interval); clearTimeout(timer) }
   }, [onDismiss])
 
   const handleSkip = () => {
     setVisible(false)
-    setTimeout(onDismiss, 300)
+    setTimeout(onDismiss, 400)
   }
 
   return (
@@ -126,227 +58,256 @@ export default function SplashScreen({ onDismiss }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+      background: 'radial-gradient(ellipse at 30% 40%, #312e81 0%, #1e1b4b 45%, #0f0e1a 100%)',
       opacity: visible ? 1 : 0,
-      transition: 'opacity 0.4s ease',
-      padding: '1rem',
-      overflowY: 'auto',
+      transition: 'opacity 0.5s ease',
+      perspective: '900px',
+      overflow: 'hidden',
     }}>
-      <div style={{
-        textAlign: 'center',
-        color: '#fff',
-        maxWidth: '900px',
-        width: '100%',
-        padding: '2rem 1.75rem',
-        animation: 'splashFadeUp 0.6s ease forwards',
-      }}>
 
-        {/* ── Header row: logo + title + version ─────────────────────── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.7rem', marginBottom: '0.4rem' }}>
-          <span style={{ fontSize: '2.6rem', lineHeight: 1 }}>💰</span>
-          <div style={{ textAlign: 'left' }}>
+      {/* ── Ambient floating orbs ─────────────────────────────────── */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', width: 380, height: 380,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)',
+          top: '-80px', left: '-60px',
+          animation: 'orbFloat1 8s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', width: 280, height: 280,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.28) 0%, transparent 70%)',
+          bottom: '-60px', right: '5%',
+          animation: 'orbFloat2 10s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute', width: 180, height: 180,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(236,72,153,0.18) 0%, transparent 70%)',
+          top: '55%', left: '60%',
+          animation: 'orbFloat3 12s ease-in-out infinite',
+        }} />
+      </div>
+
+      {/* ── 3D glass card ─────────────────────────────────────────── */}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        width: '100%',
+        maxWidth: '420px',
+        padding: '0 1.25rem',
+        animation: 'cardFloat 6s ease-in-out infinite',
+        transformStyle: 'preserve-3d',
+      }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.07)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: '20px',
+          padding: '2.25rem 2rem 1.5rem',
+          boxShadow: `
+            0 8px 48px rgba(0,0,0,0.55),
+            0 0 0 1px rgba(255,255,255,0.06) inset,
+            0 1px 0 rgba(255,255,255,0.18) inset
+          `,
+          textAlign: 'center',
+          color: '#fff',
+        }}>
+
+          {/* ── Quote ───────────────────────────────────────────── */}
+          <div style={{ marginBottom: '2rem' }}>
+            {/* Opening quote mark */}
+            <div style={{
+              fontSize: '3.5rem',
+              lineHeight: 0.6,
+              color: 'rgba(99,102,241,0.7)',
+              fontFamily: 'Georgia, serif',
+              marginBottom: '0.6rem',
+              userSelect: 'none',
+            }}>
+              "
+            </div>
+            <p style={{
+              fontStyle: 'italic',
+              fontSize: 'clamp(0.82rem, 2.5vw, 0.96rem)',
+              lineHeight: 1.65,
+              color: 'rgba(255,255,255,0.88)',
+              margin: '0 0 0.9rem',
+              letterSpacing: '0.01em',
+            }}>
+              {quote.text}
+            </p>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.45)',
+              letterSpacing: '0.8px',
+              textTransform: 'uppercase',
+            }}>
+              — {quote.author}
+            </span>
+          </div>
+
+          {/* ── Divider ─────────────────────────────────────────── */}
+          <div style={{
+            height: '1px',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)',
+            marginBottom: '1.6rem',
+          }} />
+
+          {/* ── App identity ────────────────────────────────────── */}
+          <div style={{ marginBottom: '1.75rem' }}>
+            <div style={{
+              fontSize: '2.4rem',
+              marginBottom: '0.5rem',
+              filter: 'drop-shadow(0 0 14px rgba(99,102,241,0.6))',
+              animation: 'iconPulse 3s ease-in-out infinite',
+            }}>
+              💰
+            </div>
             <h1 style={{
-              fontSize: 'clamp(1.4rem, 4vw, 1.9rem)',
+              fontSize: 'clamp(1.3rem, 4vw, 1.7rem)',
               fontWeight: 800,
+              margin: '0 0 0.45rem',
               letterSpacing: '-0.5px',
-              margin: 0,
               color: '#fff',
-              lineHeight: 1.1,
+              textShadow: '0 2px 20px rgba(99,102,241,0.4)',
             }}>
               Expense Tracker
             </h1>
-            <span style={{
-              display: 'inline-block',
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: '999px',
-              padding: '1px 10px',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              letterSpacing: '0.5px',
-              marginTop: '3px',
-            }}>
-              v2.2.0
-            </span>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}>
+              <span style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                borderRadius: '999px',
+                padding: '3px 14px',
+                fontSize: '0.73rem',
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+                boxShadow: '0 0 12px rgba(99,102,241,0.5)',
+              }}>
+                v2.2.0
+              </span>
+              <span style={{
+                fontSize: '0.65rem',
+                color: 'rgba(255,255,255,0.3)',
+                letterSpacing: '0.3px',
+              }}>
+                by Sayu-V
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* ── Financial quote ─────────────────────────────────────────── */}
-        <div style={{
-          background: 'rgba(255,255,255,0.12)',
-          border: '1px solid rgba(255,255,255,0.25)',
-          borderRadius: '10px',
-          padding: '0.7rem 1.2rem',
-          marginBottom: '1.2rem',
-          marginTop: '0.8rem',
-        }}>
-          <p style={{
-            fontStyle: 'italic',
-            fontSize: 'clamp(0.78rem, 2vw, 0.9rem)',
-            color: 'rgba(255,255,255,0.92)',
-            margin: '0 0 0.3rem',
-            lineHeight: 1.5,
+          {/* ── Progress bar ────────────────────────────────────── */}
+          <div style={{
+            height: '2px',
+            background: 'rgba(255,255,255,0.12)',
+            borderRadius: '999px',
+            marginBottom: '1.1rem',
+            overflow: 'hidden',
           }}>
-            "{quote.text}"
-          </p>
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            color: 'rgba(255,255,255,0.65)',
-            letterSpacing: '0.3px',
-          }}>
-            — {quote.author}
-          </span>
-        </div>
+            <div style={{
+              height: '100%',
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, #6366F1, #8B5CF6, #EC4899)',
+              borderRadius: '999px',
+              transition: 'width 0.05s linear',
+              boxShadow: '0 0 8px rgba(99,102,241,0.7)',
+            }} />
+          </div>
 
-        {/* ── Kanban board ────────────────────────────────────────────── */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-          gap: '0.7rem',
-          marginBottom: '1.3rem',
-          textAlign: 'left',
-        }}>
-          {KANBAN.map((col) => (
-            <div key={col.title} style={{
-              background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              borderRadius: '10px',
-              overflow: 'hidden',
-            }}>
-              {/* Column header */}
-              <div style={{
-                background: col.color,
-                padding: '0.35rem 0.7rem',
-                display: 'flex',
+          {/* ── Footer row ──────────────────────────────────────── */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-              }}>
-                <span style={{ fontSize: '0.85rem' }}>{col.icon}</span>
-                <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  color: '#fff',
-                  letterSpacing: '0.3px',
-                  textTransform: 'uppercase',
-                }}>
-                  {col.title}
-                </span>
-              </div>
+                color: 'rgba(255,255,255,0.45)',
+                fontSize: '0.72rem',
+                textDecoration: 'none',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.85)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.45)' }}
+            >
+              <svg height="13" width="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                         0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+                         -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66
+                         .07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15
+                         -.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27
+                         .68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+                         .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+                         0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
+              GitHub
+            </a>
 
-              {/* Feature cards */}
-              <div style={{ padding: '0.45rem 0.55rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                {col.items.map((item) => (
-                  <div key={item} style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    borderRadius: '5px',
-                    padding: '0.28rem 0.5rem',
-                    fontSize: '0.73rem',
-                    color: 'rgba(255,255,255,0.9)',
-                    lineHeight: 1.35,
-                  }}>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Progress bar ────────────────────────────────────────────── */}
-        <div style={{
-          height: '3px',
-          background: 'rgba(255,255,255,0.25)',
-          borderRadius: '999px',
-          marginBottom: '1rem',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            height: '100%',
-            width: `${progress}%`,
-            background: '#fff',
-            borderRadius: '999px',
-            transition: 'width 0.05s linear',
-          }} />
-        </div>
-
-        {/* ── GitHub link + Skip row ───────────────────────────────────── */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '0.75rem',
-          flexWrap: 'wrap',
-        }}>
-          {/* GitHub CTA */}
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: 'rgba(255,255,255,0.15)',
-              border: '1px solid rgba(255,255,255,0.35)',
-              color: '#fff',
-              borderRadius: '6px',
-              padding: '6px 14px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              transition: 'background 0.15s',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.28)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)' }}
-          >
-            <svg height="16" width="16" viewBox="0 0 16 16" fill="#fff" aria-hidden="true">
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
-                       0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
-                       -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66
-                       .07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15
-                       -.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27
-                       .68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
-                       .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
-                       0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-            </svg>
-            View on GitHub
-          </a>
-
-          {/* Built-by + Skip */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', whiteSpace: 'nowrap' }}>
-              by Sayu-V · IBM
-            </span>
             <button
               onClick={handleSkip}
               style={{
-                background: 'rgba(255,255,255,0.15)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                color: '#fff',
-                borderRadius: '6px',
-                padding: '6px 16px',
-                fontSize: '0.8rem',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.18)',
+                color: 'rgba(255,255,255,0.7)',
+                borderRadius: '8px',
+                padding: '5px 16px',
+                fontSize: '0.75rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 minHeight: 'auto',
-                transition: 'background 0.15s',
-                whiteSpace: 'nowrap',
+                letterSpacing: '0.3px',
+                transition: 'all 0.15s',
               }}
-              onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.25)' }}
-              onMouseLeave={(e) => { e.target.style.background = 'rgba(255,255,255,0.15)' }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.16)'
+                e.target.style.color = '#fff'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.08)'
+                e.target.style.color = 'rgba(255,255,255,0.7)'
+              }}
             >
-              Skip →
+              Enter →
             </button>
           </div>
+
         </div>
       </div>
 
-      {/* Keyframe injected inline */}
+      {/* ── Keyframes ────────────────────────────────────────────── */}
       <style>{`
-        @keyframes splashFadeUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes cardFloat {
+          0%   { transform: translateY(0px)   rotateX(1deg)  rotateY(-1deg); }
+          25%  { transform: translateY(-9px)  rotateX(-1deg) rotateY(1.5deg); }
+          50%  { transform: translateY(-14px) rotateX(2deg)  rotateY(-0.5deg); }
+          75%  { transform: translateY(-7px)  rotateX(-0.5deg) rotateY(1deg); }
+          100% { transform: translateY(0px)   rotateX(1deg)  rotateY(-1deg); }
+        }
+        @keyframes orbFloat1 {
+          0%, 100% { transform: translate(0,   0)   scale(1); }
+          50%       { transform: translate(40px, 30px) scale(1.08); }
+        }
+        @keyframes orbFloat2 {
+          0%, 100% { transform: translate(0,   0)   scale(1); }
+          50%       { transform: translate(-30px, -20px) scale(1.12); }
+        }
+        @keyframes orbFloat3 {
+          0%, 100% { transform: translate(0,  0); }
+          50%       { transform: translate(20px, -25px); }
+        }
+        @keyframes iconPulse {
+          0%, 100% { filter: drop-shadow(0 0 10px rgba(99,102,241,0.5)); transform: scale(1); }
+          50%       { filter: drop-shadow(0 0 22px rgba(139,92,246,0.8)); transform: scale(1.06); }
         }
       `}</style>
     </div>
