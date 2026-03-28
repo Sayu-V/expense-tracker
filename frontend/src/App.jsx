@@ -166,7 +166,7 @@ function AppShell({ theme, onToggleTheme }) {
         <div className="sidebar-header">
           <div className="logo">
             💰 Expense Tracker
-            <span className="logo-version">v2.1</span>
+            <span className="logo-version">v2.2</span>
           </div>
         </div>
 

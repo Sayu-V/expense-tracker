@@ -10,6 +10,41 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.2.0] — feature/v2.2.0 — 2026-03-28
+
+### Added
+
+**PWA Offline Mode**
+- `frontend/public/sw.js` — Service worker with two fetch strategies:
+  - **App shell** (HTML, JS, CSS, fonts): cache-first with background revalidation — app loads instantly from cache, even without internet
+  - **API calls** (`/api/…`): network-first with stale cache fallback — fresh data when online, last-known data served offline with a `503` JSON placeholder
+  - Old versioned caches are purged automatically on SW activate
+- `frontend/public/manifest.json` — Full PWA manifest: `display: standalone`, `theme_color: #5E5CE6`, shortcuts for "Add Expense" and "Dashboard", maskable SVG icon
+- `frontend/public/icon.svg` — Purple rounded-square SVG app icon for home-screen install (works on Chrome, Safari, Edge)
+- `frontend/index.html` — Links manifest + icon; registers `sw.js` via `navigator.serviceWorker.register` on `window load`
+
+**Cursor-based Pagination (Expenses)**
+- `schemas.py` — New `ExpensePage` response model: `{ items, next_cursor, has_more, total }`
+- `expense_service.py` — `list_expenses_page()` using a `(date DESC, id DESC)` keyset cursor encoded in base64:
+  - Cursor encodes the last seen `(date, id)` pair — stable even when new rows are inserted mid-session
+  - Fetches `page_size + 1` rows to detect `has_more` without a second query
+  - Separate `COUNT(*)` query returns the total matching rows for "X of Y" display
+- `routers/expenses.py` — `GET /expenses` now returns `ExpensePage`; accepts `?page_size` (1–200, default 50) and `?cursor` for subsequent pages
+- `Expenses.jsx` — "Load more" pagination UI:
+  - `fetchExpenses()` resets to page 1; `loadMore()` appends to the existing list
+  - **"Showing X of Y entries"** count shown below the table
+  - **"⬇ Load more"** button appears while `has_more` is true; disappears on the last page
+- `Dashboard.jsx` — Updated recent-expenses fetch to read `response.data.items` from the new paginated response shape
+
+### Changed
+- `Dashboard.jsx` — Spend by Category chart now auto-switches: ≤ 6 categories → Pie chart; > 6 categories → Treemap (tile size proportional to spend, clickable drill-down)
+- `useAutoRefresh.js` — Dashboard auto-refresh interval slowed from 30 s → 5 minutes
+- `SplashScreen.jsx` — Auto-dismiss extended from 3 s → 7 s; version bumped to `v2.2.0`
+- `Chat.jsx` — Starter suggestion chips expanded from 6 → 20 questions across Expenses, Budgets, Goals, and Import & Rules sections
+- `ImportRules.jsx` — Priority field changed from free-text number input to a 3-option dropdown (1 — Highest, 5 — Normal, 10 — Low); Active toggle added to the create/edit form header
+
+---
+
 ## [2.1.0] — feature/v2.0.0 — 2026-03-28
 
 ### Added

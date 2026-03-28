@@ -36,6 +36,8 @@ const FEATURES = [
   '📥  Bank statement import (PDF & CSV)',
   '🏷️  Income sources & auto-classification',
   '⚙️  Import Rules — smart auto-categorisation',
+  '📶  PWA offline mode — works without internet',
+  '📄  Cursor-based pagination — handles thousands of entries',
 ]
 
 const SPLASH_DURATION = 7000  // ms before auto-dismiss
@@ -114,7 +116,7 @@ export default function SplashScreen({ onDismiss }) {
           letterSpacing: '0.5px',
           marginBottom: '1.25rem',
         }}>
-          v2.1.0
+          v2.2.0
         </span>
 
         {/* Feature list — 2 cols on wide, 1 col on narrow */}
