@@ -42,6 +42,40 @@ function lsSet(key, value) {
   try { localStorage.setItem(key, value) } catch { /* sandboxed */ }
 }
 
+// ── Galaxy orb overlay (only rendered in galaxy mode) ────────────────────────
+function GalaxyOrbs() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 0,
+      pointerEvents: 'none', overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', width: 520, height: 520, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 68%)',
+        top: '-120px', left: '-80px',
+        animation: 'galaxyOrb1 10s ease-in-out infinite',
+      }} />
+      <div style={{
+        position: 'absolute', width: 380, height: 380, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 68%)',
+        bottom: '-80px', right: '3%',
+        animation: 'galaxyOrb2 13s ease-in-out infinite',
+      }} />
+      <div style={{
+        position: 'absolute', width: 240, height: 240, borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 68%)',
+        top: '50%', left: '58%',
+        animation: 'galaxyOrb3 16s ease-in-out infinite',
+      }} />
+    </div>
+  )
+}
+
+// Theme cycle: light → dark → galaxy → light
+const THEME_CYCLE = { light: 'dark', dark: 'galaxy', galaxy: 'light' }
+const THEME_ICON  = { light: '🌙', dark: '🌌', galaxy: '☀️' }
+const THEME_TITLE = { light: 'Switch to dark mode', dark: 'Switch to galaxy 3D mode', galaxy: 'Switch to light mode' }
+
 // ── TopBar ───────────────────────────────────────────────────────────────────
 function TopBar({ theme, onToggleTheme, onMenuToggle, sidebarHidden }) {
   const location   = useLocation()
@@ -72,9 +106,22 @@ function TopBar({ theme, onToggleTheme, onMenuToggle, sidebarHidden }) {
         <button
           className="theme-toggle"
           onClick={onToggleTheme}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={THEME_TITLE[theme]}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+            padding: '0 0.65rem', minWidth: 64, fontSize: '0.78rem',
+            fontWeight: 600,
+            ...(theme === 'galaxy' ? {
+              background: 'rgba(129,140,248,0.18)',
+              borderColor: 'rgba(129,140,248,0.45)',
+              boxShadow: '0 0 10px rgba(129,140,248,0.3)',
+            } : {}),
+          }}
         >
-          {theme === 'dark' ? '☀️' : '🌙'}
+          <span style={{ fontSize: '1rem' }}>{THEME_ICON[theme]}</span>
+          <span style={{ fontSize: '0.7rem', letterSpacing: '0.2px', opacity: 0.8 }}>
+            {theme === 'light' ? 'Light' : theme === 'dark' ? 'Dark' : '3D'}
+          </span>
         </button>
       </div>
     </div>
@@ -148,6 +195,9 @@ function AppShell({ theme, onToggleTheme }) {
 
   return (
     <div className="app">
+      {/* ── Galaxy orb background (only in galaxy mode) ── */}
+      {theme === 'galaxy' && <GalaxyOrbs />}
+
       {/* ── Mobile backdrop ── */}
       <div
         className={`sidebar-backdrop${menuOpen ? ' sidebar-open' : ''}`}
@@ -286,7 +336,7 @@ export default function App() {
     lsSet('et-theme', theme)
   }, [theme])
 
-  const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))
+  const toggleTheme = () => setTheme((t) => THEME_CYCLE[t] ?? 'light')
 
   return (
     <>
