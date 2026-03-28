@@ -11,10 +11,16 @@ On startup:
 CORS is configured from .env so the React dev server can talk to the API.
 """
 
+import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
+
+logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.database import create_db_and_tables, engine
@@ -97,6 +103,26 @@ app = FastAPI(
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
 )
+
+
+# ---------------------------------------------------------------------------
+# Validation error handler — logs the full Pydantic v2 detail to stdout
+# so 422 errors are visible in Docker logs (docker compose logs backend)
+# ---------------------------------------------------------------------------
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # exc.errors() may contain non-serialisable objects (e.g. ValueError in ctx).
+    # jsonable_encoder converts them to strings so JSONResponse can serialise them.
+    errors = jsonable_encoder(exc.errors())
+    logger.error(
+        "422 Validation Error  %s %s\n  body: %s\n  errors: %s",
+        request.method,
+        request.url.path,
+        exc.body,
+        errors,
+    )
+    return JSONResponse(status_code=422, content={"detail": errors})
 
 
 # ---------------------------------------------------------------------------

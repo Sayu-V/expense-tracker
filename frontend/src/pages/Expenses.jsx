@@ -83,7 +83,9 @@ export default function Expenses() {
     if (filterMinAmount)  params.min_amount   = filterMinAmount
     if (filterMaxAmount)  params.max_amount   = filterMaxAmount
     if (filterType)       params.type         = filterType
-    expensesApi.list(params).then((r) => { setExpenses(r.data); setLoading(false) })
+    expensesApi.list(params)
+      .then((r) => { setExpenses(r.data); setLoading(false) })
+      .catch(() => { setLoading(false) })   // prevent unhandled rejection crash
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCategory, filterDateFrom, filterDateTo, filterMinAmount, filterMaxAmount, filterType, refreshKey])
 
@@ -132,10 +134,10 @@ export default function Expenses() {
     fetchExpenses()
   }
 
-  const handleEditSave = () => {
+  const handleEditSave = useCallback(() => {
     setEditTarget(null)
-    fetchExpenses()
-  }
+    fetchExpenses()   // refetch to show latest data (avoid optimistic-update crashes)
+  }, [fetchExpenses])
 
   // ── v1.5.0 Bulk actions ───────────────────────────────────────────────────
   const allIds      = expenses.map((e) => e.id)
@@ -375,7 +377,7 @@ export default function Expenses() {
                   </td>
                   <td style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>{e.notes || '—'}</td>
                   <td style={{ textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: e.type === 'income' ? 'var(--color-green)' : 'var(--text-primary)' }}>
-                    {e.type === 'income' ? '+' : ''}₹{e.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {e.type === 'income' ? '+' : ''}₹{(e.amount ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>

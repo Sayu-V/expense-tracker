@@ -28,7 +28,7 @@ export default function RecurringExpenses() {
   const [saving,     setSaving]     = useState(false)
   const [genLoading, setGenLoading] = useState({})     // {id: bool}
   const [genResult,  setGenResult]  = useState(null)   // last generate result
-  const refreshKey = useAutoRefresh(60)
+  const refreshKey = useAutoRefresh(60_000)  // 60 s — was 60 ms causing hundreds of requests/min
   const isFirstLoad = useRef(true)   // only show spinner on very first fetch
 
   const expenseCategories = categories.filter(c => c.category_type === 'expense')

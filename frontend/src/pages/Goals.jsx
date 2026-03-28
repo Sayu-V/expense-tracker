@@ -208,7 +208,7 @@ export default function Goals() {
   const [saving,       setSaving]       = useState(false)
   const [savingsModal, setSavingsModal] = useState(null)  // goal object
   const [filter,       setFilter]       = useState('all') // all | active | completed
-  const refreshKey = useAutoRefresh(60)
+  const refreshKey = useAutoRefresh(60_000)  // 60 s — was 60 ms causing hundreds of requests/min
   const isFirstLoad = useRef(true)   // only show spinner on very first fetch
 
   const load = useCallback(async () => {

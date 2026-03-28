@@ -11,6 +11,8 @@
  *   - Auto-refresh every 30 s via useAutoRefresh hook (pauses when tab hidden)
  * v1.6.0:
  *   - All Recharts props use useChartTheme() for dark/light mode correctness
+ * v1.7.0:
+ *   - Savings Goals section: shows up to 3 active goals with progress bars + projected dates
  */
 
 import { useEffect, useState } from 'react'
@@ -22,7 +24,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
   BarChart, Bar,
 } from 'recharts'
-import { reportsApi, budgetsApi, expensesApi, insightsApi } from '../api/index'
+import { reportsApi, budgetsApi, expensesApi, insightsApi, goalsApi } from '../api/index'
 import { usePeriod } from '../context/PeriodContext'
 import { getRandomQuote } from '../data/quotes'
 
@@ -42,6 +44,7 @@ export default function Dashboard() {
   const [budgetStatus,   setBudgetStatus]    = useState([])
   const [recentExpenses, setRecentExpenses]  = useState([])
   const [insights,       setInsights]        = useState([])
+  const [goals,          setGoals]           = useState([])
   const [loading,        setLoading]         = useState(true)
 
   // Quote — stable for the lifetime of this mount
@@ -67,8 +70,9 @@ export default function Dashboard() {
       budgetsApi.status({ month: period.month, year: period.year }),
       expensesApi.list({ date_from: period.dateFrom, date_to: period.dateTo, limit: 10 }),
       insightsApi.list(),
+      goalsApi.list(),
     ])
-      .then(([sum, prevSum, cat, tr, budget, recent, ins]) => {
+      .then(([sum, prevSum, cat, tr, budget, recent, ins, goalsRes]) => {
         setSummary(sum.data)
         setPrevSummary(prevSum.data)
         setBreakdown(cat.data)
@@ -76,6 +80,7 @@ export default function Dashboard() {
         setBudgetStatus(budget.data)
         setRecentExpenses(recent.data)
         setInsights(ins.data)
+        setGoals(goalsRes.data ?? [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -270,14 +275,74 @@ export default function Dashboard() {
               <YAxis type="category" dataKey="category_name" tick={ct.tickMd} width={75} />
               <Tooltip formatter={(v) => `₹${v.toLocaleString('en-IN')}`} contentStyle={ct.tooltipStyle} itemStyle={ct.tooltipItemStyle} labelStyle={ct.tooltipLabelStyle} />
               <Legend wrapperStyle={ct.legendStyle} />
-              <Bar dataKey="budgeted" name="Budget" fill={ct.accentLight} radius={[0, 4, 4, 0]} />
-              <Bar dataKey="actual"   name="Actual" fill={ct.accent}      radius={[0, 4, 4, 0]} />
+              <Bar dataKey="budgeted" name="Budget" fill={ct.barBudgetFill} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="actual"   name="Actual" fill={ct.accent}       radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* ── Row 4: Recent Expenses + Insights ── */}
+      {/* ── Row 4: Savings Goals ── */}
+      {goals.filter((g) => !g.is_completed).length > 0 && (
+        <div className="card" style={{ marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <span className="section-title" style={{ margin: 0 }}>🏆 Savings Goals</span>
+            <button className="btn-icon" onClick={() => navigate('/goals')} style={{ fontSize: '0.78rem', padding: '0.3rem 0.75rem' }}>
+              View all →
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+            {goals.filter((g) => !g.is_completed).slice(0, 3).map((g) => {
+              const pct = Math.min(100, Math.round((g.current_amount / g.target_amount) * 100))
+              const isOverdue = g.deadline && new Date(g.deadline) < new Date() && !g.is_completed
+              const barColor = pct >= 100 ? 'var(--color-green)' : isOverdue ? 'var(--color-red)' : 'var(--accent)'
+              return (
+                <div key={g.id}
+                  onClick={() => navigate('/goals')}
+                  style={{
+                    padding: '1rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-surface)',
+                    cursor: 'pointer',
+                    transition: 'box-shadow 0.15s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.10)'}
+                  onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.3 }}>{g.name}</span>
+                    <span style={{ fontWeight: 700, fontSize: '1rem', color: barColor, marginLeft: '0.5rem', whiteSpace: 'nowrap' }}>{pct}%</span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', marginBottom: '0.6rem', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: barColor, transition: 'width 0.4s ease' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    <span>₹{g.current_amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })} saved</span>
+                    <span>of ₹{g.target_amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                  </div>
+
+                  {g.projected_completion_date && pct < 100 && (
+                    <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: isOverdue ? 'var(--color-red)' : 'var(--text-tertiary)' }}>
+                      {isOverdue ? '⚠️ Overdue · ' : '📅 On track · '}Est. {g.projected_completion_date}
+                    </div>
+                  )}
+                  {g.deadline && !g.projected_completion_date && (
+                    <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: isOverdue ? 'var(--color-red)' : 'var(--text-tertiary)' }}>
+                      {isOverdue ? '⚠️ Deadline passed: ' : '🎯 Deadline: '}{g.deadline}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Row 5: Recent Expenses + Insights ── */}
       <div className="grid-2">
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>

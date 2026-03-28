@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react'
 function readColors() {
   const s   = getComputedStyle(document.documentElement)
   const css = (v) => s.getPropertyValue(v).trim()
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
 
   const border        = css('--border')          || 'rgba(60,60,67,0.12)'
   const textPrimary   = css('--text-primary')    || '#1C1C1E'
@@ -37,6 +38,10 @@ function readColors() {
   const colorGreen    = css('--color-green')     || '#34C759'
   const colorRed      = css('--color-red')       || '#FF3B30'
 
+  // In dark mode --accent-light is rgba(123,121,255,0.15) — nearly invisible as
+  // a chart bar fill. Use a solid muted purple instead so "Budget" bars are legible.
+  const barBudgetFill = isDark ? 'rgba(123,121,255,0.45)' : accentLight
+
   return {
     border,
     textPrimary,
@@ -46,6 +51,7 @@ function readColors() {
     bgSurface,
     accent,
     accentLight,
+    barBudgetFill,   // solid version of accentLight — readable in both dark and light
     colorGreen,
     colorRed,
 

@@ -38,22 +38,36 @@ export default function EditExpenseModal({ expense, categories, onSave, onClose 
     setForm((f) => ({ ...f, type: newType, category_id: '' }))
   }
 
+  // Use functional updaters everywhere so rapid typing never reads stale state
+  const handleField = (field) => (e) =>
+    setForm((f) => ({ ...f, [field]: e.target.value }))
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
     setError('')
+
+    const payload = {
+      amount:      parseFloat(form.amount),
+      category_id: parseInt(form.category_id, 10),
+      description: form.description.trim(),
+      notes:       (form.notes ?? '').trim() || null,
+      date:        form.date,
+      type:        form.type,
+    }
     try {
-      const res = await expensesApi.update(expense.id, {
-        amount:      parseFloat(form.amount),
-        category_id: parseInt(form.category_id),
-        description: form.description,
-        notes:       form.notes || null,
-        date:        form.date,
-        type:        form.type,
-      })
+      const res = await expensesApi.update(expense.id, payload)
       onSave(res.data)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Update failed')
+      // Pydantic v2 returns detail as an array of {loc, msg, type} objects.
+      // Rendering a plain-object array as JSX crashes React ("Objects are not valid
+      // as a React child"), which is what caused the blank screen.
+      const detail = err.response?.data?.detail
+      const msg = Array.isArray(detail)
+        ? detail.map((e) => e.msg ?? JSON.stringify(e)).join(' · ')
+        : (typeof detail === 'string' ? detail : null)
+      setError(msg || 'Update failed. Please try again.')
+    } finally {
       setSubmitting(false)
     }
   }
@@ -92,13 +106,13 @@ export default function EditExpenseModal({ expense, categories, onSave, onClose 
             <label className="form-label">Amount (₹)</label>
             <input type="number" step="0.01" min="0.01" required
               value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              onChange={handleField('amount')} />
           </div>
 
           {/* Category */}
           <div>
             <label className="form-label">Category</label>
-            <select required value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+            <select required value={form.category_id} onChange={handleField('category_id')}>
               <option value="">Select {form.type} category…</option>
               {formCategories.map((c) => (
                 <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
@@ -111,22 +125,23 @@ export default function EditExpenseModal({ expense, categories, onSave, onClose 
             <label className="form-label">Description</label>
             <input type="text" required maxLength={200}
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              onChange={handleField('description')} />
           </div>
 
           {/* Date */}
           <div>
             <label className="form-label">Date</label>
             <input type="date" required value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              onChange={handleField('date')} />
           </div>
 
-          {/* Notes */}
-          <div>
+          {/* Notes — full width, multi-line */}
+          <div style={{ gridColumn: 'span 2' }}>
             <label className="form-label">Notes</label>
-            <input type="text" maxLength={500} value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Optional…" />
+            <textarea rows={3} maxLength={500} value={form.notes}
+              onChange={handleField('notes')}
+              placeholder="Optional — add any extra details, context, or reminders…"
+              style={{ resize: 'vertical', minHeight: '72px', fontFamily: 'inherit', fontSize: '0.9rem' }} />
           </div>
 
           {/* Actions */}

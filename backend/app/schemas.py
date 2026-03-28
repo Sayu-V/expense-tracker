@@ -15,6 +15,14 @@ from datetime import date, datetime
 from typing import Optional
 from pydantic import BaseModel, field_validator
 
+# Python 3.10+ evaluates annotated defaults (x: T = v) by doing the assignment
+# *before* evaluating the annotation.  When a field is named the same as its
+# type (e.g.  date: Optional[date] = None), the class-namespace binding
+# 'date = None' shadows the imported 'datetime.date', so Optional[date]
+# resolves to NoneType — causing a "Input should be None" 422 on every PUT.
+# Using a private alias breaks the shadowing.
+_Date = date
+
 
 # ---------------------------------------------------------------------------
 # Category schemas
@@ -106,7 +114,7 @@ class ExpenseUpdate(BaseModel):
     category_id: Optional[int] = None
     description: Optional[str] = None
     notes: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[_Date] = None   # _Date alias avoids field-name shadowing datetime.date
     type: Optional[str] = None   # v1.1.0
 
     @field_validator("amount")
