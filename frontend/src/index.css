@@ -446,7 +446,8 @@ button {
 .btn-icon:hover { background: var(--bg-base); color: var(--text-primary); }
 
 /* ── Inputs ──────────────────────────────────────────────────── */
-input, select, textarea {
+/* Exclude checkboxes and radios from the text-input reset — they have their own styles below */
+input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   width: 100%;
   padding: 0.6rem 0.875rem;
   border: 1px solid var(--border);
@@ -460,10 +461,128 @@ input, select, textarea {
   -webkit-appearance: none;
 }
 
-input::placeholder, textarea::placeholder { color: var(--text-tertiary); }
-input:focus, select:focus, textarea:focus {
+input:not([type="checkbox"]):not([type="radio"])::placeholder,
+textarea::placeholder { color: var(--text-tertiary); }
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus, textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(94,92,230,0.12);
+}
+
+/* ── Checkbox ────────────────────────────────────────────────── */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  border: 2px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background var(--transition), border-color var(--transition);
+  flex-shrink: 0;
+}
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Radio ───────────────────────────────────────────────────── */
+input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--bg-surface);
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background var(--transition), border-color var(--transition);
+  flex-shrink: 0;
+}
+input[type="radio"]:checked {
+  border-color: var(--accent);
+}
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+/* ── Toggle switch (.toggle-switch label > input + .track + .knob) */
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggle-switch input[type="checkbox"] {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 1;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.toggle-switch input[type="checkbox"]::after { display: none; }
+.toggle-switch .track {
+  position: absolute;
+  inset: 0;
+  background: var(--border-strong);
+  border-radius: 999px;
+  transition: background 0.2s;
+  pointer-events: none;
+}
+.toggle-switch input[type="checkbox"]:checked + .track {
+  background: var(--accent);
+}
+.toggle-switch .knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  pointer-events: none;
+}
+.toggle-switch input[type="checkbox"]:checked ~ .knob {
+  left: 19px;
 }
 
 select {

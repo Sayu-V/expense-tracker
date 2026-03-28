@@ -399,16 +399,15 @@ function RuleCard({ rule, categories, onEdit, onDelete, onToggle }) {
               : 'No matches yet'}
           </div>
         </div>
-        {/* Toggle switch */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', flexShrink: 0 }}>
-          <div style={{ position: 'relative', width: 36, height: 20 }}>
-            <input type="checkbox" checked={isActive} onChange={() => onToggle(rule)}
-              style={{ opacity: 0, position: 'absolute', inset: 0, width: '100%', height: '100%', cursor: 'pointer', margin: 0 }} />
-            <div style={{ position: 'absolute', inset: 0, background: isActive ? '#6366f1' : '#d1d5db', borderRadius: 999, transition: 'background 0.2s' }} />
-            <div style={{ position: 'absolute', top: 3, left: isActive ? 19 : 3, width: 14, height: 14, background: '#fff', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
-          </div>
+        {/* Toggle switch — uses .toggle-switch CSS class from index.css */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <label className="toggle-switch">
+            <input type="checkbox" checked={isActive} onChange={() => onToggle(rule)} />
+            <span className="track" />
+            <span className="knob" />
+          </label>
           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>{isActive ? 'On' : 'Off'}</span>
-        </label>
+        </div>
       </div>
 
       {/* Condition + action pills */}
