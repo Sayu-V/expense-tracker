@@ -10,6 +10,57 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.0.0] — feature/v2.0.0 — 2026-03-28
+
+### Added
+
+**Bank Statement Import — PDF & CSV (v2.0.0)**
+- New `📥 Import` page with 3-step flow: Upload → Review → Done
+- Drag-and-drop or click-to-browse file upload (PDF and CSV, max 20 MB)
+- Canara Bank PDF parser: full 8-column pdfplumber table extraction, cross-page row continuation, B/F skip, date normalisation
+- Generic CSV parser: auto-detects column headers (Date, Description, Debit, Credit, Amount, Dr/Cr) across common bank layouts
+- Smart categoriser engine (2-pass: rule engine + income-source DB lookup):
+  - UPI/DR → Expense; UPI/CR → Income (UPI received)
+  - SWEEP IN → Investment; SWEEP OUT → Income (FD maturity)
+  - NEFT/IMPS: direction from debit/credit column; flagged if unclassified large deposit
+  - SALARY/PAYROLL → Income (salary); REFUND → Income (refund)
+  - 50+ merchant keyword rules: Zomato/Swiggy → Food; Amazon/Flipkart → Shopping; Ola/Uber → Transport; etc.
+- Duplicate detection: rows already in the DB (matching date + amount + description prefix) are pre-marked and pre-skipped
+- Flagging: large unclassified deposits (≥ ₹10,000) shown with ⚠️ and reason for user review
+- Preview table: per-row type selector, category dropdown (filtered by income/expense), skip checkbox, confidence indicator dot
+- Confirm import: bulk-creates Expense rows; investments and transfers are skipped gracefully
+- Import session store: in-memory, 30-minute TTL — safe for single-instance Docker deploy
+
+**Income Sources (v2.0.0)**
+- New `income_sources` DB table (SQLModel, v2.0.0)
+- Income Sources panel below the import form — define recurring senders (tenants, employer, clients)
+- Fields: display name, type (salary/rent/business/interest/other), sender keyword, expected amount, expected day
+- Keyword matched (case-insensitive) against bank description during import — overrides rule engine with 'high' confidence
+- Full CRUD: list, create, update, delete via `/api/v1/income-sources`
+
+**New Default Categories (v2.0.0)**
+- Business Income 🏢, Interest Income 🏦, Refund ↩️ (income)
+- Bank Charges 🏧, Fuel ⛽, Insurance 🛡️, Education 📚, Utilities 💡, Cash Withdrawal 💵, Investments 📈 (expense)
+
+**Backend**
+- New service: `categorizer_service.py` — rule engine, keyword tables, income-source lookup, resolve_category_id helper
+- New service: `import_service.py` — parse_and_preview(), confirm_import(), session store, Canara Bank PDF parser, generic CSV parser
+- New router: `imports.py` — POST /import/upload, POST /import/confirm, GET/POST/PUT/DELETE /income-sources
+- New model: `IncomeSource` → `income_sources` table
+- New schemas: `ImportTransaction`, `ImportPreviewResponse`, `ImportRowUpdate`, `ImportConfirmRequest`, `ImportConfirmResponse`, `IncomeSourceCreate/Update/Read`
+- Added to `requirements.txt`: `pdfplumber==0.11.0`, `python-multipart==0.0.9`
+- API version bumped to `2.0.0`
+
+**Frontend**
+- New page: `Import.jsx` — three-step wizard (Upload / Review / Done)
+- `App.jsx` — Import route added (`/import`), sidebar nav item (📥 Import), sidebar version badge updated to `v2.0`
+- `SplashScreen.jsx` — version badge updated to `v2.0.0`; 2 new v2.0 features added to feature list
+
+### Changed
+- `main.py` — 10 new default categories seeded; `IncomeSource` model imported so SQLModel creates `income_sources` table on startup
+
+---
+
 ## [1.9.0] — feature/v1.8.0 — 2026-03-28
 
 ### Added

@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.database import create_db_and_tables, engine
-from app.models import Category
-from app.routers import expenses, categories, budgets, reports, insights, chat, recurring, alerts, goals
+from app.models import Category, IncomeSource  # noqa: F401 — ensures SQLModel creates income_sources table
+from app.routers import expenses, categories, budgets, reports, insights, chat, recurring, alerts, goals, imports
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +50,17 @@ DEFAULT_CATEGORIES = [
     {"name": "Dividend",       "color": "#ca8a04", "emoji": "📈", "category_type": "income", "is_default": True},
     {"name": "Gift",           "color": "#dc2626", "emoji": "🎁", "category_type": "income", "is_default": True},
     {"name": "Rental Income",  "color": "#9333ea", "emoji": "🏘️", "category_type": "income", "is_default": True},
+    # ── v2.0.0 additions ──────────────────────────────────────────────────────
+    {"name": "Business Income","color": "#0d9488", "emoji": "🏢", "category_type": "income", "is_default": True},
+    {"name": "Interest Income","color": "#d97706", "emoji": "🏦", "category_type": "income", "is_default": True},
+    {"name": "Refund",         "color": "#0ea5e9", "emoji": "↩️", "category_type": "income", "is_default": True},
+    {"name": "Bank Charges",   "color": "#ef4444", "emoji": "🏧", "category_type": "expense","is_default": True},
+    {"name": "Fuel",           "color": "#f59e0b", "emoji": "⛽", "category_type": "expense","is_default": True},
+    {"name": "Insurance",      "color": "#8b5cf6", "emoji": "🛡️", "category_type": "expense","is_default": True},
+    {"name": "Education",      "color": "#2563eb", "emoji": "📚", "category_type": "expense","is_default": True},
+    {"name": "Utilities",      "color": "#64748b", "emoji": "💡", "category_type": "expense","is_default": True},
+    {"name": "Cash Withdrawal","color": "#78716c", "emoji": "💵", "category_type": "expense","is_default": True},
+    {"name": "Investments",    "color": "#16a34a", "emoji": "📈", "category_type": "expense","is_default": True},
 ]
 
 
@@ -98,7 +109,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="Personal finance tracking with FastAPI, SQLModel, and PostgreSQL",
-    version="1.9.0",
+    version="2.0.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
@@ -151,6 +162,7 @@ app.include_router(chat.router,       prefix="/api/v1")   # v1.5.0
 app.include_router(recurring.router,  prefix="/api/v1")   # v1.7.0
 app.include_router(alerts.router,     prefix="/api/v1")   # v1.7.0
 app.include_router(goals.router,      prefix="/api/v1")   # v1.7.0
+app.include_router(imports.router,    prefix="/api/v1")   # v2.0.0
 
 
 # ---------------------------------------------------------------------------
@@ -160,4 +172,4 @@ app.include_router(goals.router,      prefix="/api/v1")   # v1.7.0
 @app.get("/health", tags=["Health"])
 def health_check():
     """Quick liveness check — Docker healthcheck hits this."""
-    return {"status": "ok", "version": "1.9.0"}
+    return {"status": "ok", "version": "2.0.0"}

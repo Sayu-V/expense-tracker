@@ -8,6 +8,7 @@
  * v1.7.0: Recurring Expenses, Spending Alerts (with badge), Goals pages.
  * v1.8.0: Smart insights feed, YoY chart, predicted spend on Dashboard.
  * v1.9.0: Version badge updated; rich emoji picker for categories.
+ * v2.0.0: Bank statement import (PDF + CSV), income sources, new categories.
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -20,6 +21,7 @@ import Chat               from './pages/Chat'
 import RecurringExpenses  from './pages/RecurringExpenses'
 import Alerts             from './pages/Alerts'
 import Goals              from './pages/Goals'
+import Import             from './pages/Import'
 import SplashScreen       from './components/SplashScreen'
 import PeriodSelector     from './components/PeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
@@ -162,7 +164,7 @@ function AppShell({ theme, onToggleTheme }) {
         <div className="sidebar-header">
           <div className="logo">
             💰 Expense Tracker
-            <span className="logo-version">v1.9</span>
+            <span className="logo-version">v2.0</span>
           </div>
         </div>
 
@@ -206,6 +208,9 @@ function AppShell({ theme, onToggleTheme }) {
           </NavLink>
           <NavLink to="/goals" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span className="nav-icon">🏆</span> Goals
+          </NavLink>
+          <NavLink to="/import" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <span className="nav-icon">📥</span> Import
           </NavLink>
         </div>
 
@@ -252,6 +257,7 @@ function AppShell({ theme, onToggleTheme }) {
             <Route path="/recurring"  element={<RecurringExpenses />} />
             <Route path="/alerts"     element={<Alerts />} />
             <Route path="/goals"      element={<Goals />} />
+            <Route path="/import"     element={<Import />} />
           </Routes>
         </div>
       </div>

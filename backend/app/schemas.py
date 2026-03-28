@@ -500,6 +500,128 @@ class TrendPoint(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# v2.0.0 — Bank Statement Import schemas
+# ---------------------------------------------------------------------------
+
+class ImportTransaction(BaseModel):
+    """
+    One parsed row from a CSV/PDF bank statement — shown in the preview table
+    before the user confirms. row_id is a client-side UUID for diff tracking.
+    """
+    row_id: str                               # UUID string, assigned by parser
+    date: date
+    description: str                          # Cleaned description shown to user
+    raw_description: str = ""                 # Original bank text (for debugging)
+    merchant: str = ""                        # Extracted merchant/sender name
+    amount: float
+    type: str = "expense"                     # 'expense' | 'income' | 'investment' | 'transfer'
+    income_subtype: Optional[str] = None      # 'salary' | 'rent' | 'business' | 'interest' | 'refund' | 'fd_maturity'
+    suggested_category_id: Optional[int] = None
+    suggested_category_name: Optional[str] = None
+    suggested_category_emoji: Optional[str] = None
+    confidence: str = "low"                   # 'high' | 'medium' | 'low'
+    is_duplicate: bool = False                # Already exists in DB
+    is_flagged: bool = False                  # ⚠️ Needs user review
+    flag_reason: Optional[str] = None        # Why it was flagged
+    ref_no: Optional[str] = None             # Bank reference/cheque number
+    skip: bool = False                        # User chose to skip this row
+
+
+class ImportPreviewResponse(BaseModel):
+    """Returned after file upload — full parsed transaction list for preview."""
+    session_id: str                           # In-memory key for confirm step
+    filename: str
+    bank_format: str                          # 'canara_bank' | 'generic_csv'
+    total_rows: int
+    duplicate_count: int
+    flagged_count: int
+    transactions: list[ImportTransaction]
+
+
+class ImportRowUpdate(BaseModel):
+    """User's edits to one row in the preview table."""
+    row_id: str
+    type: str                                 # Final type after user review
+    category_id: Optional[int] = None        # Final category after user selection
+    description: Optional[str] = None        # User-edited description
+    skip: bool = False                        # True = exclude from import
+
+
+class ImportConfirmRequest(BaseModel):
+    """Sent when user clicks Confirm Import."""
+    session_id: str
+    rows: list[ImportRowUpdate]
+
+
+class ImportConfirmResponse(BaseModel):
+    """Returned after successful bulk import."""
+    imported_count: int
+    skipped_count: int
+    duplicate_skipped: int
+    expense_ids: list[int]
+
+
+# ---------------------------------------------------------------------------
+# v2.0.0 — Income Source schemas (user-defined recurring income patterns)
+# ---------------------------------------------------------------------------
+
+class IncomeSourceCreate(BaseModel):
+    """
+    Defines a recurring income source so the import can auto-classify deposits.
+    sender_keyword is matched case-insensitively against the bank description.
+    """
+    name: str                                 # Display name, e.g. "Rahul Sharma (Rent)"
+    source_type: str = "rent"                 # 'salary' | 'rent' | 'business' | 'interest' | 'other'
+    sender_keyword: str                       # Matched against description
+    expected_amount: Optional[float] = None  # Optional — used for confidence scoring
+    expected_day: Optional[int] = None        # Day of month (1–31), optional
+    category_id: Optional[int] = None        # Which income category to assign
+
+    @field_validator("source_type")
+    @classmethod
+    def valid_source_type(cls, v: str) -> str:
+        if v not in ("salary", "rent", "business", "interest", "other"):
+            raise ValueError("source_type must be salary | rent | business | interest | other")
+        return v
+
+    @field_validator("sender_keyword")
+    @classmethod
+    def keyword_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("sender_keyword cannot be blank")
+        return v.strip().upper()
+
+    @field_validator("expected_day")
+    @classmethod
+    def valid_day(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and not 1 <= v <= 31:
+            raise ValueError("expected_day must be 1–31")
+        return v
+
+
+class IncomeSourceUpdate(BaseModel):
+    name: Optional[str] = None
+    source_type: Optional[str] = None
+    sender_keyword: Optional[str] = None
+    expected_amount: Optional[float] = None
+    expected_day: Optional[int] = None
+    category_id: Optional[int] = None
+
+
+class IncomeSourceRead(BaseModel):
+    id: int
+    name: str
+    source_type: str
+    sender_keyword: str
+    expected_amount: Optional[float] = None
+    expected_day: Optional[int] = None
+    category_id: Optional[int] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ---------------------------------------------------------------------------
 # Insights schema
 # ---------------------------------------------------------------------------
 

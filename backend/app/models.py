@@ -12,6 +12,7 @@ Tables:
   - RecurringExpense  → recurring_expenses  (v1.7.0)
   - SpendingAlert     → spending_alerts     (v1.7.0)
   - Goal              → goals               (v1.7.0)
+  - IncomeSource      → income_sources      (v2.0.0)
 
 v1.1.0 additions:
   - Category.emoji  — display emoji for category badges (e.g. 🍔 for Food)
@@ -159,3 +160,27 @@ class Goal(SQLModel, table=True):
     is_completed: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ---------------------------------------------------------------------------
+# v2.0.0 — Income Sources (user-defined recurring income patterns)
+# ---------------------------------------------------------------------------
+
+class IncomeSource(SQLModel, table=True):
+    """
+    User-defined mapping of a recurring income sender to a category and type.
+    During bank statement import, each deposit description is matched against
+    sender_keyword (case-insensitive substring) to auto-classify the income.
+
+    source_type: 'salary' | 'rent' | 'business' | 'interest' | 'other'
+    """
+    __tablename__ = "income_sources"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=200)                              # Display label
+    source_type: str = Field(default="other", max_length=20)      # salary | rent | business | interest | other
+    sender_keyword: str = Field(max_length=200, index=True)        # Matched against description (UPPER)
+    expected_amount: Optional[float] = Field(default=None)         # Optional amount for confidence boost
+    expected_day: Optional[int] = Field(default=None, ge=1, le=31) # Expected day of month
+    category_id: Optional[int] = Field(default=None, foreign_key="categories.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
