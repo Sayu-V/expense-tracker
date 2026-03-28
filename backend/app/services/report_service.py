@@ -16,7 +16,7 @@ from dateutil.relativedelta import relativedelta
 from sqlmodel import Session, select, func
 
 from app.models import Expense, Category
-from app.schemas import MonthlySummary, CategoryBreakdown, TrendPoint
+from app.schemas import MonthlySummary, CategoryBreakdown, TrendPoint, YoYPoint, SpendPrediction
 
 
 def _month_range(year: int, month: int) -> tuple[date, date]:
@@ -181,6 +181,123 @@ def get_spend_trend(session: Session, months: int = 6) -> list[TrendPoint]:
         ))
 
     return result
+
+
+def get_year_over_year(session: Session, year: Optional[int] = None) -> list[YoYPoint]:
+    """
+    v1.8.0 — Monthly expense + income totals for this_year vs last_year.
+    Returns 12 YoYPoint objects (Jan–Dec), oldest first.
+    Only returns months up to the current month for this_year (future months
+    are 0.0 so the chart stays honest).
+    """
+    now = datetime.utcnow()
+    this_year = year or now.year
+    last_year = this_year - 1
+    cal_months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    result: list[YoYPoint] = []
+
+    for m in range(1, 13):
+        # this_year — only show actuals for months that have already started
+        if this_year == now.year and m > now.month:
+            ty_expense = 0.0
+            ty_income  = 0.0
+        else:
+            ty_start, ty_end = _month_range(this_year, m)
+            ty_expense = round(session.exec(
+                select(func.sum(Expense.amount)).where(
+                    Expense.date >= ty_start, Expense.date <= ty_end,
+                    Expense.type == "expense",
+                )
+            ).first() or 0.0, 2)
+            ty_income = round(session.exec(
+                select(func.sum(Expense.amount)).where(
+                    Expense.date >= ty_start, Expense.date <= ty_end,
+                    Expense.type == "income",
+                )
+            ).first() or 0.0, 2)
+
+        ly_start, ly_end = _month_range(last_year, m)
+        ly_expense = round(session.exec(
+            select(func.sum(Expense.amount)).where(
+                Expense.date >= ly_start, Expense.date <= ly_end,
+                Expense.type == "expense",
+            )
+        ).first() or 0.0, 2)
+        ly_income = round(session.exec(
+            select(func.sum(Expense.amount)).where(
+                Expense.date >= ly_start, Expense.date <= ly_end,
+                Expense.type == "income",
+            )
+        ).first() or 0.0, 2)
+
+        result.append(YoYPoint(
+            month=m,
+            label=cal_months[m - 1],
+            this_year=ty_expense,
+            last_year=ly_expense,
+            income_this_year=ty_income,
+            income_last_year=ly_income,
+        ))
+
+    return result
+
+
+def get_spend_prediction(
+    session: Session,
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+) -> SpendPrediction:
+    """
+    v1.8.0 — Linear extrapolation of current month spend.
+    daily_rate  = total_spent / days_elapsed
+    predicted   = daily_rate × days_in_month
+    """
+    now = datetime.utcnow()
+    m = month or now.month
+    y = year or now.year
+    start, end = _month_range(y, m)
+    days_in_month = monthrange(y, m)[1]
+
+    # For current month use today as the cutoff; for past months use the last day
+    if y == now.year and m == now.month:
+        days_elapsed = max(now.day, 1)
+        cutoff = now.date()
+    else:
+        days_elapsed = days_in_month
+        cutoff = end
+
+    spent = round(session.exec(
+        select(func.sum(Expense.amount)).where(
+            Expense.date >= start,
+            Expense.date <= cutoff,
+            Expense.type == "expense",
+        )
+    ).first() or 0.0, 2)
+
+    income = round(session.exec(
+        select(func.sum(Expense.amount)).where(
+            Expense.date >= start,
+            Expense.date <= cutoff,
+            Expense.type == "income",
+        )
+    ).first() or 0.0, 2)
+
+    daily_rate = round(spent / days_elapsed, 2) if days_elapsed > 0 else 0.0
+    predicted  = round(daily_rate * days_in_month, 2)
+    pred_net   = round(income - predicted, 2)
+
+    return SpendPrediction(
+        month=m,
+        year=y,
+        days_elapsed=days_elapsed,
+        days_in_month=days_in_month,
+        spent_so_far=spent,
+        daily_rate=daily_rate,
+        predicted_total=predicted,
+        income_so_far=income,
+        predicted_net=pred_net,
+    )
 
 
 def get_top_expenses(

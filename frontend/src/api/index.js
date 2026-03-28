@@ -23,6 +23,9 @@ export const reportsApi = {
   byCategory:     (params = {}) => client.get('/reports/by-category', { params }),
   trend:          (params = {}) => client.get('/reports/trend', { params }),
   topExpenses:    (params = {}) => client.get('/reports/top-expenses', { params }),
+  // v1.8.0
+  yearOverYear:   (params = {}) => client.get('/reports/year-over-year', { params }),
+  prediction:     (params = {}) => client.get('/reports/prediction', { params }),
 }
 
 export const insightsApi = {

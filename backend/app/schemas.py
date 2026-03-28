@@ -440,6 +440,33 @@ class GoalProgress(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# v1.8.0 — Year-over-Year and Spend Prediction schemas
+# ---------------------------------------------------------------------------
+
+class YoYPoint(BaseModel):
+    """One month's data point for the year-over-year comparison chart."""
+    month: int                       # 1–12
+    label: str                       # "Jan", "Feb", …
+    this_year: float                 # expense total for this_year/month
+    last_year: float                 # expense total for last_year/month
+    income_this_year: float = 0.0
+    income_last_year: float = 0.0
+
+
+class SpendPrediction(BaseModel):
+    """Linear extrapolation of current month's spend to end-of-month total."""
+    month: int
+    year: int
+    days_elapsed: int
+    days_in_month: int
+    spent_so_far: float
+    daily_rate: float                # avg spend per elapsed day
+    predicted_total: float           # daily_rate × days_in_month
+    income_so_far: float
+    predicted_net: float             # income_so_far − predicted_total (positive = surplus)
+
+
+# ---------------------------------------------------------------------------
 # Reports schemas
 # ---------------------------------------------------------------------------
 

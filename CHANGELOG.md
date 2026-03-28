@@ -10,6 +10,37 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.8.0] — feature/v1.8.0 — 2026-03-28
+
+### Added
+
+**Smart Insights Feed (v1.8.0)**
+- Rule 8 `daily_rate` — computes daily burn rate (spent ÷ days elapsed) and projects month-end total; surfaces when days remain and projection is meaningfully higher than current spend
+- Rule 9 `savings_rate` — shows what % of income is being saved; celebrates ≥20% savings rate; warns when spending exceeds income for the month
+- Rule 10 `yoy_comparison` — compares current month's total spend vs the same month last year; surfaces when the change is ≥15% in either direction
+
+**Year-over-Year Comparison**
+- New `GET /api/v1/reports/year-over-year?year=YYYY` endpoint — returns 12 `YoYPoint` objects (Jan–Dec) with expense + income totals for `this_year` and `last_year`; future months of the current year show `0.0` to keep the chart honest
+- New `YoYPoint` Pydantic schema: `month`, `label`, `this_year`, `last_year`, `income_this_year`, `income_last_year`
+- Dashboard — grouped bar chart comparing this year vs last year (Jan–Dec) using Recharts `BarChart` with two bars per month
+- Frontend `reportsApi.yearOverYear(params)` API method added
+
+**Predicted Monthly Spend**
+- New `GET /api/v1/reports/prediction?month=M&year=YYYY` endpoint — linear extrapolation: `daily_rate = spent_so_far / days_elapsed`, `predicted_total = daily_rate × days_in_month`
+- New `SpendPrediction` Pydantic schema: `days_elapsed`, `days_in_month`, `spent_so_far`, `daily_rate`, `predicted_total`, `income_so_far`, `predicted_net`
+- Dashboard — Prediction card showing progress bar (spent vs predicted), spent-so-far vs predicted-total mini-cards, daily rate, and a surplus/deficit banner
+- Frontend `reportsApi.prediction(params)` API method added
+
+### Changed
+- `insights_service.py` — added 3 new rules (daily_rate, savings_rate, yoy_comparison) to the existing 7-rule engine
+- `report_service.py` — imports `YoYPoint`, `SpendPrediction`; two new service functions added
+- `routers/reports.py` — two new GET endpoints registered
+- `api/index.js` — `reportsApi` extended with `yearOverYear` and `prediction`
+- `Dashboard.jsx` — two new API calls in `Promise.all`, new state vars `yoyData` and `prediction`, new Row 2b with the prediction card and YoY chart
+- App version bumped to `1.8.0`
+
+---
+
 ## [1.7.0] — feature/v1.1.0 — 2026-03-28
 
 ### Added

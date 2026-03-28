@@ -13,6 +13,10 @@
  *   - All Recharts props use useChartTheme() for dark/light mode correctness
  * v1.7.0:
  *   - Savings Goals section: shows up to 3 active goals with progress bars + projected dates
+ * v1.8.0:
+ *   - Smart Insights Feed: 3 new rules — daily burn rate, savings rate, year-over-year
+ *   - Year-over-Year grouped bar chart: this year vs last year by month
+ *   - Predicted Month-End Spend card: linear extrapolation from daily rate
  */
 
 import { useEffect, useState } from 'react'
@@ -45,6 +49,8 @@ export default function Dashboard() {
   const [recentExpenses, setRecentExpenses]  = useState([])
   const [insights,       setInsights]        = useState([])
   const [goals,          setGoals]           = useState([])
+  const [yoyData,        setYoyData]         = useState([])   // v1.8.0
+  const [prediction,     setPrediction]      = useState(null) // v1.8.0
   const [loading,        setLoading]         = useState(true)
 
   // Quote — stable for the lifetime of this mount
@@ -71,8 +77,10 @@ export default function Dashboard() {
       expensesApi.list({ date_from: period.dateFrom, date_to: period.dateTo, limit: 10 }),
       insightsApi.list(),
       goalsApi.list(),
+      reportsApi.yearOverYear({ year: period.year }),   // v1.8.0
+      reportsApi.prediction({ month: period.month, year: period.year }), // v1.8.0
     ])
-      .then(([sum, prevSum, cat, tr, budget, recent, ins, goalsRes]) => {
+      .then(([sum, prevSum, cat, tr, budget, recent, ins, goalsRes, yoy, pred]) => {
         setSummary(sum.data)
         setPrevSummary(prevSum.data)
         setBreakdown(cat.data)
@@ -81,6 +89,8 @@ export default function Dashboard() {
         setRecentExpenses(recent.data)
         setInsights(ins.data)
         setGoals(goalsRes.data ?? [])
+        setYoyData(yoy.data ?? [])     // v1.8.0
+        setPrediction(pred.data ?? null) // v1.8.0
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -247,6 +257,101 @@ export default function Dashboard() {
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* ── Row 2b (v1.8.0): Predicted Spend card + YoY comparison chart ── */}
+      <div className="grid-2" style={{ marginBottom: '1.25rem' }}>
+
+        {/* Prediction card */}
+        {prediction && (
+          <div className="card">
+            <div className="section-title">📈 Predicted Month-End Spend</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+              {/* Progress bar: spent so far vs predicted */}
+              {prediction.predicted_total > 0 && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                    <span>Spent so far</span>
+                    <span>{Math.round((prediction.spent_so_far / prediction.predicted_total) * 100)}% of predicted</span>
+                  </div>
+                  <div style={{ height: 8, borderRadius: 4, background: 'var(--border)', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${Math.min(100, Math.round((prediction.spent_so_far / prediction.predicted_total) * 100))}%`,
+                      background: 'var(--accent)',
+                      borderRadius: 4,
+                      transition: 'width 0.4s ease',
+                    }} />
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div style={{ padding: '0.75rem', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem' }}>Spent so far</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-red)' }}>
+                    ₹{prediction.spent_so_far.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: '0.15rem' }}>
+                    Day {prediction.days_elapsed} of {prediction.days_in_month}
+                  </div>
+                </div>
+                <div style={{ padding: '0.75rem', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem' }}>Predicted total</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    ₹{prediction.predicted_total.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: '0.15rem' }}>
+                    ₹{prediction.daily_rate.toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day avg
+                  </div>
+                </div>
+              </div>
+
+              {/* Predicted net */}
+              <div style={{
+                padding: '0.6rem 0.875rem',
+                borderRadius: 'var(--radius-sm)',
+                background: prediction.predicted_net >= 0 ? 'var(--color-green-bg, rgba(16,185,129,0.08))' : 'var(--color-red-bg)',
+                color: prediction.predicted_net >= 0 ? 'var(--color-green)' : 'var(--color-red)',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+              }}>
+                {prediction.predicted_net >= 0
+                  ? `✅ Projected surplus of ₹${prediction.predicted_net.toLocaleString('en-IN', { maximumFractionDigits: 0 })} by month end`
+                  : `⚠️ Projected deficit of ₹${Math.abs(prediction.predicted_net).toLocaleString('en-IN', { maximumFractionDigits: 0 })} by month end`}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Year-over-Year grouped bar chart */}
+        {yoyData.length > 0 && (
+          <div className="card">
+            <div className="section-title">
+              📊 Year-over-Year Comparison
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', fontWeight: 400, marginLeft: '0.5rem' }}>
+                {new Date().getFullYear()} vs {new Date().getFullYear() - 1}
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={yoyData} margin={{ left: 0, right: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={ct.border} />
+                <XAxis dataKey="label" tick={ct.tickSm} />
+                <YAxis tick={ct.tickSm} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
+                  contentStyle={ct.tooltipStyle}
+                  itemStyle={ct.tooltipItemStyle}
+                  labelStyle={ct.tooltipLabelStyle}
+                />
+                <Legend wrapperStyle={ct.legendStyle} />
+                <Bar dataKey="this_year" name={`${new Date().getFullYear()}`} fill={ct.accent}      radius={[3, 3, 0, 0]} />
+                <Bar dataKey="last_year" name={`${new Date().getFullYear() - 1}`} fill={ct.barBudgetFill} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* ── Row 3: Budget vs Actual — bars are clickable ── */}

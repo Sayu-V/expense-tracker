@@ -19,12 +19,14 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 
 from app.database import get_session
-from app.schemas import MonthlySummary, CategoryBreakdown, TrendPoint, ExpenseRead
+from app.schemas import MonthlySummary, CategoryBreakdown, TrendPoint, ExpenseRead, YoYPoint, SpendPrediction
 from app.services.report_service import (
     get_monthly_summary,
     get_category_breakdown,
     get_spend_trend,
     get_top_expenses,
+    get_year_over_year,
+    get_spend_prediction,
 )
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
@@ -77,6 +79,31 @@ def spend_trend(
 ):
     """Monthly total spend + income over the past N months."""
     return get_spend_trend(session, months=months)
+
+
+@router.get("/year-over-year", response_model=list[YoYPoint])
+def year_over_year(
+    year: Optional[int] = Query(None, description="v1.8.0: Year to compare (defaults to current year)"),
+    session: Session = Depends(get_session),
+):
+    """
+    v1.8.0 — Month-by-month expense + income totals for this_year vs last_year.
+    Returns 12 data points (Jan–Dec). Future months of the current year show 0.
+    """
+    return get_year_over_year(session, year=year)
+
+
+@router.get("/prediction", response_model=SpendPrediction)
+def spend_prediction(
+    month: Optional[int] = Query(None, ge=1, le=12, description="v1.8.0: Month to predict (defaults to current month)"),
+    year: Optional[int] = Query(None, description="v1.8.0: Year (defaults to current year)"),
+    session: Session = Depends(get_session),
+):
+    """
+    v1.8.0 — Linear extrapolation of current month spend.
+    Uses daily_rate = spent_so_far / days_elapsed, then projects to month end.
+    """
+    return get_spend_prediction(session, month=month, year=year)
 
 
 @router.get("/top-expenses", response_model=list[ExpenseRead])
