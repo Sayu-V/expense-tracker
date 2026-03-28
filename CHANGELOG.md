@@ -1,12 +1,55 @@
+---
+title: Changelog
+date: 2026-03-28
+tags:
+  - expense-tracker
+  - changelog
+  - documentation
+aliases:
+  - Release Notes
+  - Version History
+status: active
+related:
+  - "[[README]]"
+  - "[[Architecture]]"
+  - "[[docs/Tech_Stack]]"
+---
+
 # Changelog
 
-All notable changes to this project are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-This project uses [Semantic Versioning](https://semver.org/).
+> [!info] Format
+> All notable changes to this project are documented here.
+> Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+> This project uses [Semantic Versioning](https://semver.org/).
+
+See also: [[README]] · [[Architecture]] · [[docs/Tech_Stack]] · [[docs/HLD]] · [[docs/LLD]]
 
 ---
 
 ## [Unreleased]
+
+---
+
+## [2.3.0] — feature/v2.2.0 — 2026-03-28
+
+### Added
+
+**Settings Hub — Sidebar Consolidation**
+- New `⚙️ Settings` page (`Settings.jsx`) consolidating four low-frequency config pages into a single tabbed hub, reducing sidebar clutter
+- URL-driven internal tabs — state stored in `?tab=` query param so links are shareable and the browser back button works naturally:
+  - `?tab=categories` — manage expense/income categories
+  - `?tab=import` — upload bank statements (PDF / CSV)
+  - `?tab=import-rules` — define auto-classification rules (Import Rules Engine with its own nested tabs remains fully functional)
+  - `?tab=whats-new` — feature changelog kanban board
+- Legacy routes (`/categories`, `/import`, `/import-rules`, `/features`) redirect automatically via React Router `<Navigate replace>` — no broken links from existing sessions or bookmarks
+- `Navigate` imported from `react-router-dom` to handle legacy redirects
+
+**Cross-platform Safety**
+- Added `.gitattributes` to the repo root (`* text=auto eol=lf`) — enforces Unix LF line endings on checkout regardless of the developer's OS, preventing the classic `\r: command not found` error when running Docker containers on Windows
+
+### Changed
+- Sidebar trimmed from **11 items → 8 items**: Dashboard, Expenses, Budgets, Chat AI, Recurring, Alerts, Goals, ⚙️ Settings
+- `App.jsx` — removed individual page imports for `Categories`, `Import`, `ImportRules`, `FeatureUpdates`; added `Settings` import; removed standalone routes for the four consolidated pages; version badge updated to `v2.3`
 
 ---
 
@@ -36,11 +79,47 @@ This project uses [Semantic Versioning](https://semver.org/).
   - **"⬇ Load more"** button appears while `has_more` is true; disappears on the last page
 - `Dashboard.jsx` — Updated recent-expenses fetch to read `response.data.items` from the new paginated response shape
 
+**3D Splash Screen & Financial Quote**
+- `SplashScreen.jsx` — full rewrite to a minimal glass-morphism 3D card replacing the old feature-list splash:
+  - `QUOTES` array of 6 curated financial quotes (Buffett, Munger, Graham, Lynch, Kiyosaki, Keynes) rotated randomly on each session
+  - `cardFloat` CSS keyframe: subtle `rotateX` / `rotateY` with `perspective` on parent for a floating 3D feel
+  - Three ambient radial-gradient orbs pulsing in the background
+  - Gradient progress bar with glow; `SPLASH_DURATION = 7000 ms`; "Enter →" button (formerly "Skip")
+- `frontend/src/data/quotes.js` — moved quote data to dedicated file
+
+**Galaxy 3D Theme (Third Theme Option)**
+- `App.jsx` — three-way theme cycle: `light → dark → galaxy → light`; `THEME_CYCLE`, `THEME_ICON`, `THEME_TITLE` maps; toggle button shows icon + label ("Light" / "Dark" / "3D")
+- `GalaxyOrbs` component — three fixed `position: fixed` radial-gradient orbs (`z-index: 0`) animated with `@keyframes galaxyOrb1/2/3`; rendered only in galaxy mode
+- `[data-theme="galaxy"]` CSS block in `index.css`:
+  - `body` — deep-space multi-layer radial gradient with `background-attachment: fixed`
+  - `.card` — `backdrop-filter: blur(18px)` glass-morphism with inner-glow border
+  - `.topbar` — `rgba(12,10,34,0.6)` + `backdrop-filter: blur(24px)`
+  - `.sidebar` — `rgba(7,5,22,0.88)` + `backdrop-filter: blur(20px)`
+  - Inputs, buttons, period selector all glass-adapted
+- **Bug fix** (`fix(galaxy)`): replaced `position: relative` overrides with `z-index`-only rules — the original `position: relative` silently cancelled the base `position: fixed` on `.sidebar`, making it scroll with the page; also removed the gap between sidebar and main content
+
+**Feature Updates Page**
+- New `FeatureUpdates.jsx` page (`/features` → now `/settings?tab=whats-new`) — kanban board with 5 colour-coded columns:
+  - Core Tracking (indigo), Budgets & Goals (green), Analytics (amber), AI & Import (pink), Design & Tech (purple)
+  - Each feature card has a name + plain-English one-liner description
+  - Version history timeline at bottom: v1.5 → v2.3.0 with "Latest" badge
+
+**Button System Standardisation**
+- `index.css` — `.btn` base class added (`display: inline-flex; min-height: 36px; align-items: center; gap: 0.35rem`); previously used widely via `className="btn btn-primary"` but never defined
+- `.btn-secondary` — `background: var(--bg-surface)` + `border: 1px solid var(--border-strong)` + shadow; hover shifts `border-color` and `color` to `var(--accent)`
+- `.btn-danger` — replaced hardcoded `#fef2f2 / #dc2626` with `var(--color-red-bg) / var(--color-red)` so it adapts correctly in dark and galaxy modes
+- `.btn-icon` — `min-width/height: 32px; display: inline-flex; align-items/justify-content: center` for uniform square icon buttons
+- `Expenses.jsx` — removed inline padding overrides; delete button changed to `btn-icon btn-danger`
+- `ImportRules.jsx` — row action buttons migrated from inline `style` to `btn btn-sm btn-secondary / btn-danger`
+
+**Splash — Show Once Per Session**
+- `App.jsx` — splash state initialised from `sessionStorage` (`et-splash-seen`) instead of `useState(true)`; `handleSplashDismiss` sets the key before hiding; splash no longer re-fires on URL-bar page navigation within the same session
+
 ### Changed
 - `Dashboard.jsx` — Spend by Category chart now auto-switches: ≤ 6 categories → Pie chart; > 6 categories → Treemap (tile size proportional to spend, clickable drill-down)
 - `useAutoRefresh.js` — Dashboard auto-refresh interval slowed from 30 s → 5 minutes
-- `SplashScreen.jsx` — Auto-dismiss extended from 3 s → 7 s; version bumped to `v2.2.0`
-- `Chat.jsx` — Starter suggestion chips expanded from 6 → 20 questions across Expenses, Budgets, Goals, and Import & Rules sections
+- `SplashScreen.jsx` — Auto-dismiss extended from 3 s → 7 s; version bumped to `v2.2.0`; redesigned as minimal 3D glass-morphism card (see Added above)
+- `Chat.jsx` — Starter chips ==refined from 20 → 5 essential questions== (one per major app area: spending, budgets, goals, income vs expenses, uncategorised); follow-up context provided by backend `quickReplies`
 - `ImportRules.jsx` — Priority field changed from free-text number input to a 3-option dropdown (1 — Highest, 5 — Normal, 10 — Low); Active toggle added to the create/edit form header
 
 ---
