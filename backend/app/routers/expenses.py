@@ -18,11 +18,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.database import get_session
-from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead, SuggestCategoryResponse, BulkDeleteRequest
+from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead, ExpensePage, SuggestCategoryResponse, BulkDeleteRequest
 from app.services.expense_service import (
     create_expense,
     get_expense_by_id,
     list_expenses,
+    list_expenses_page,
     update_expense,
     delete_expense,
 )
@@ -67,23 +68,27 @@ def bulk_delete(payload: BulkDeleteRequest, session: Session = Depends(get_sessi
     return {"deleted": deleted}
 
 
-@router.get("", response_model=list[ExpenseRead])
+@router.get("", response_model=ExpensePage)
 def list_all(
-    category_id: Optional[int] = Query(None, description="Filter by category"),
-    date_from: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
-    date_to: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
-    min_amount: Optional[float] = Query(None, description="Minimum amount"),
-    max_amount: Optional[float] = Query(None, description="Maximum amount"),
-    type: Optional[str] = Query(None, description="Filter by type: 'expense' or 'income'"),
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
-    session: Session = Depends(get_session),
+    category_id: Optional[int]   = Query(None, description="Filter by category"),
+    date_from:   Optional[date]   = Query(None, description="Start date (YYYY-MM-DD)"),
+    date_to:     Optional[date]   = Query(None, description="End date (YYYY-MM-DD)"),
+    min_amount:  Optional[float]  = Query(None, description="Minimum amount filter"),
+    max_amount:  Optional[float]  = Query(None, description="Maximum amount filter"),
+    type:        Optional[str]    = Query(None, description="Filter by type: 'expense' or 'income'"),
+    page_size:   int              = Query(50, ge=1, le=200, description="Items per page (max 200)"),
+    cursor:      Optional[str]    = Query(None, description="Opaque cursor from previous page's next_cursor"),
+    session:     Session          = Depends(get_session),
 ):
     """
-    List expenses with optional filters.
-    All filters are combinable — e.g. ?category_id=1&date_from=2026-03-01&type=expense
+    v2.2.0 — Cursor-based paginated expense list.
+
+    First page: omit `cursor`. Subsequent pages: pass `next_cursor` from the
+    previous response as `cursor`.  All filters are preserved across pages.
+
+    Returns ExpensePage:  { items, next_cursor, has_more, total }
     """
-    return list_expenses(
+    items, next_cursor, has_more, total = list_expenses_page(
         session,
         category_id=category_id,
         date_from=date_from,
@@ -91,9 +96,10 @@ def list_all(
         min_amount=min_amount,
         max_amount=max_amount,
         type=type,
-        limit=limit,
-        offset=offset,
+        page_size=page_size,
+        cursor=cursor,
     )
+    return ExpensePage(items=items, next_cursor=next_cursor, has_more=has_more, total=total)
 
 
 @router.get("/{expense_id}", response_model=ExpenseRead)

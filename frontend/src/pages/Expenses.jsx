@@ -50,6 +50,12 @@ export default function Expenses() {
   const [editTarget,    setEditTarget]    = useState(null)  // expense being edited
   const [selected,      setSelected]      = useState(new Set()) // v1.5.0 bulk select
 
+  // v2.2.0 — cursor-based pagination state
+  const [nextCursor,    setNextCursor]    = useState(null)
+  const [hasMore,       setHasMore]       = useState(false)
+  const [totalCount,    setTotalCount]    = useState(0)
+  const [loadingMore,   setLoadingMore]   = useState(false)
+
   // ── Filters — initialised from URL params (drill-down) ────────────────────
   const [filterCategory,  setFilterCategory]  = useState(searchParams.get('category_id') || '')
   const [filterDateFrom,  setFilterDateFrom]  = useState(searchParams.get('date_from')   || period.dateFrom)
@@ -82,20 +88,48 @@ export default function Expenses() {
   const categories     = allCategories
   const formCategories = allCategories.filter((c) => c.category_type === form.type)
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchExpenses = useCallback(() => {
+  // ── Fetch (first page — resets list) ──────────────────────────────────────
+  const buildParams = useCallback(() => {
     const params = {}
-    if (filterCategory)   params.category_id = filterCategory
-    if (filterDateFrom)   params.date_from    = filterDateFrom
-    if (filterDateTo)     params.date_to      = filterDateTo
-    if (filterMinAmount)  params.min_amount   = filterMinAmount
-    if (filterMaxAmount)  params.max_amount   = filterMaxAmount
-    if (filterType)       params.type         = filterType
-    expensesApi.list(params)
-      .then((r) => { setExpenses(r.data); setLoading(false) })
-      .catch(() => { setLoading(false) })   // prevent unhandled rejection crash
+    if (filterCategory)  params.category_id = filterCategory
+    if (filterDateFrom)  params.date_from    = filterDateFrom
+    if (filterDateTo)    params.date_to      = filterDateTo
+    if (filterMinAmount) params.min_amount   = filterMinAmount
+    if (filterMaxAmount) params.max_amount   = filterMaxAmount
+    if (filterType)      params.type         = filterType
+    return params
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterCategory, filterDateFrom, filterDateTo, filterMinAmount, filterMaxAmount, filterType, refreshKey])
+  }, [filterCategory, filterDateFrom, filterDateTo, filterMinAmount, filterMaxAmount, filterType])
+
+  const fetchExpenses = useCallback(() => {
+    setLoading(true)
+    expensesApi.list(buildParams())
+      .then((r) => {
+        const page = r.data
+        setExpenses(page.items)
+        setNextCursor(page.next_cursor)
+        setHasMore(page.has_more)
+        setTotalCount(page.total)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildParams, refreshKey])
+
+  // ── Load next page (appends to list) ──────────────────────────────────────
+  const loadMore = useCallback(() => {
+    if (!hasMore || !nextCursor || loadingMore) return
+    setLoadingMore(true)
+    expensesApi.list({ ...buildParams(), cursor: nextCursor })
+      .then((r) => {
+        const page = r.data
+        setExpenses((prev) => [...prev, ...page.items])
+        setNextCursor(page.next_cursor)
+        setHasMore(page.has_more)
+        setLoadingMore(false)
+      })
+      .catch(() => setLoadingMore(false))
+  }, [hasMore, nextCursor, loadingMore, buildParams])
 
   useEffect(() => {
     categoriesApi.list().then((r) => setAllCategories(r.data))
@@ -399,6 +433,25 @@ export default function Expenses() {
               ))}
             </tbody>
           </table>
+          </div>
+        )}
+
+        {/* ── Pagination footer ── */}
+        {expenses.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
+              Showing <strong>{expenses.length}</strong> of <strong>{totalCount}</strong> entries
+            </span>
+            {hasMore && (
+              <button
+                className="btn-secondary"
+                onClick={loadMore}
+                disabled={loadingMore}
+                style={{ fontSize: '0.85rem', padding: '0.4rem 1.1rem' }}
+              >
+                {loadingMore ? '⏳ Loading…' : '⬇ Load more'}
+              </button>
+            )}
           </div>
         )}
       </div>

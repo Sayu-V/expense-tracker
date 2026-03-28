@@ -148,6 +148,25 @@ class ExpenseRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# v2.2.0 — Cursor-based paginated expense response
+# ---------------------------------------------------------------------------
+
+class ExpensePage(BaseModel):
+    """
+    Returned by GET /expenses when cursor pagination is used.
+
+    next_cursor: opaque base64 token to pass as ?cursor= on the next call.
+                 None means this is the last page.
+    has_more:    True when there are more rows beyond this page.
+    total:       Total matching rows (ignores pagination — useful for "Showing X of Y").
+    """
+    items:       list[ExpenseRead]
+    next_cursor: Optional[str] = None
+    has_more:    bool
+    total:       int
+
+
+# ---------------------------------------------------------------------------
 # v1.1.0 — AI Suggest Category schema
 # ---------------------------------------------------------------------------
 

@@ -86,7 +86,7 @@ export default function Dashboard() {
         setBreakdown(cat.data)
         setTrend(tr.data)
         setBudgetStatus(budget.data)
-        setRecentExpenses(recent.data)
+        setRecentExpenses(recent.data.items ?? recent.data)
         setInsights(ins.data)
         setGoals(goalsRes.data ?? [])
         setYoyData(yoy.data ?? [])     // v1.8.0
