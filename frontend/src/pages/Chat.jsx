@@ -200,28 +200,11 @@ function Chip({ text, onClick }) {
 
 // ── Default quick replies shown on load ───────────────────────────────────────
 const STARTER_CHIPS = [
-  // Expenses
   'How much did I spend this month?',
-  "What are my top 5 expenses?",
-  'Show my biggest expense category',
-  'Show 6-month spending trend',
-  'What did I spend on food this month?',
-  'Compare this month vs last month',
-  // Budgets
   'How am I doing on my budget?',
-  'Which budgets am I over?',
-  'Show all my budget limits',
-  'What budget has the most left?',
-  // Goals
-  'Show income vs expenses',
   'How are my savings goals going?',
-  'Which goal is closest to completion?',
-  'How much have I saved this month?',
-  // Import & Rules
-  'How many transactions did I import?',
+  'Show income vs expenses',
   'Show uncategorised transactions',
-  'Which category has the most transactions?',
-  'Show my income sources this month',
 ]
 
 const now = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
