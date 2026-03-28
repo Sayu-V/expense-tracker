@@ -465,15 +465,13 @@ function RuleCard({ rule, categories, onEdit, onDelete, onToggle }) {
           {retro?.error && <span style={{ fontSize: '0.72rem', color: '#dc2626' }}>Apply failed</span>}
 
           <button onClick={handleRetro} disabled={!!retro?.loading} title="Re-classify all existing transactions matching this rule"
-            style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-card)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text)' }}>
+            className="btn btn-sm btn-secondary">
             🔄 Apply existing
           </button>
-          <button onClick={() => onEdit(rule)}
-            style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-card)', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, color: 'var(--color-text)' }}>
+          <button onClick={() => onEdit(rule)} className="btn btn-sm btn-secondary">
             Edit
           </button>
-          <button onClick={() => onDelete(rule)}
-            style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #fca5a5', background: '#fef2f2', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, color: '#dc2626' }}>
+          <button onClick={() => onDelete(rule)} className="btn btn-sm btn-danger">
             Delete
           </button>
         </div>

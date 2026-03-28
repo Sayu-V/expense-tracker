@@ -402,52 +402,91 @@ button {
   font-weight: 500;
   transition: all var(--transition);
   font-family: inherit;
+  line-height: 1.2;         /* prevent height variance from emoji line-height */
+  vertical-align: middle;   /* align with adjacent elements */
+}
+
+/* .btn — explicit base class used alongside .btn-primary / .btn-secondary etc.
+   Keeps height consistent when className="btn btn-primary" pattern is used. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 36px;          /* matches topbar icon buttons */
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .btn-primary {
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 1px 4px rgba(94,92,230,0.25);
 }
-.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 2px 8px rgba(94,92,230,0.35);
+}
 
+/* btn-secondary — slightly stronger border + shadow so it's visible inside cards */
 .btn-secondary {
-  background: var(--bg-base);
+  background: var(--bg-surface);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-sm);
 }
-.btn-secondary:hover { background: var(--bg-elevated); }
+.btn-secondary:hover {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  color: var(--accent);
+}
 
+/* btn-danger — use CSS vars so it adapts to dark/galaxy mode */
 .btn-danger {
   background: var(--color-red-bg);
   color: var(--color-red);
-  border: 1px solid transparent;
+  border: 1px solid var(--color-red);
+  border-opacity: 0.35;
 }
-.btn-danger:hover { background: rgba(255,59,48,0.2); }
+.btn-danger:hover { background: rgba(255,59,48,0.18); }
 
 /* v1.7.0 — small variant */
 .btn-sm {
-  padding: 0.3rem 0.65rem;
+  padding: 0.32rem 0.7rem;
   font-size: 0.78rem;
   min-height: 30px;
+  line-height: 1.2;
   border-radius: var(--radius-sm);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
 }
 .btn-ghost:hover { background: var(--bg-base); color: var(--text-primary); }
 
+/* btn-icon — square-ish icon button; consistent 32px height */
 .btn-icon {
-  background: transparent;
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.4rem 0.6rem;
+  padding: 0.35rem 0.55rem;
+  min-width: 32px;
+  min-height: 32px;
   color: var(--text-secondary);
   font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
 }
-.btn-icon:hover { background: var(--bg-base); color: var(--text-primary); }
+.btn-icon:hover {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
 
 /* ── Inputs ──────────────────────────────────────────────────── */
 /* Exclude checkboxes and radios from the text-input reset — they have their own styles below */

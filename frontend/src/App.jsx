@@ -328,7 +328,10 @@ function AppShell({ theme, onToggleTheme }) {
 
 // ── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true)
+  // Show splash only once per browser session (sessionStorage resets on tab close)
+  const [showSplash, setShowSplash] = useState(
+    () => sessionStorage.getItem('et-splash-seen') !== '1'
+  )
   const [theme, setTheme] = useState(() => lsGet('et-theme', 'light'))
 
   useEffect(() => {
@@ -338,9 +341,14 @@ export default function App() {
 
   const toggleTheme = () => setTheme((t) => THEME_CYCLE[t] ?? 'light')
 
+  const handleSplashDismiss = () => {
+    sessionStorage.setItem('et-splash-seen', '1')
+    setShowSplash(false)
+  }
+
   return (
     <>
-      {showSplash && <SplashScreen onDismiss={() => setShowSplash(false)} />}
+      {showSplash && <SplashScreen onDismiss={handleSplashDismiss} />}
       <PeriodProvider>
         <BrowserRouter>
           <AppShell theme={theme} onToggleTheme={toggleTheme} />

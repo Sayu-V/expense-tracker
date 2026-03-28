@@ -423,10 +423,8 @@ export default function Expenses() {
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                      <button className="btn-icon" title="Edit" onClick={() => setEditTarget(e)}
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>✏️</button>
-                      <button className="btn-danger" title="Delete" onClick={() => handleDelete(e.id)}
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>🗑</button>
+                      <button className="btn-icon" title="Edit" onClick={() => setEditTarget(e)}>✏️</button>
+                      <button className="btn-icon btn-danger" title="Delete" onClick={() => handleDelete(e.id)}>🗑</button>
                     </div>
                   </td>
                 </tr>
