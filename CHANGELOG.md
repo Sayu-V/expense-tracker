@@ -10,6 +10,29 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.9.0] — feature/v1.8.0 — 2026-03-28
+
+### Added
+
+**Rich Emoji Category Picker (v1.9.0)**
+- New shared `<EmojiPicker>` component in `Categories.jsx` replacing the old flat 30-emoji grid
+- 120+ emojis organised into 11 theme tabs: All, Food, Transport, Home, Shopping, Health, Entertainment, Work, Finance, Nature, Family, Misc
+- Horizontally scrollable tab row — no wrapping, keyboard accessible
+- Vertically scrollable emoji grid with `max-height: 148px` — shows all emojis without modal overflow
+- Hover highlight on each emoji button; selected emoji gets accent border + background
+- Manual input field retained for typing/pasting any emoji not in the presets
+- Both Add Category and Edit Category modals use the same `<EmojiPicker>` component
+
+**Version Display Fix (v1.9.0)**
+- `SplashScreen.jsx` — version badge updated to `v1.9.0`; 3 new v1.8–v1.9 features added to feature list
+- `App.jsx` — sidebar logo version badge updated to `v1.9`
+- `backend/app/main.py` — API version bumped to `1.9.0`
+
+### Changed
+- `Categories.jsx` — `EMOJI_PRESETS` flat array replaced with `EMOJI_CATEGORIES` structured data; `EmojiPicker` component added at top of file
+
+---
+
 ## [1.8.0] — feature/v1.8.0 — 2026-03-28
 
 ### Added

@@ -6,6 +6,8 @@
  * v1.6.0: Collapsible sidebar (desktop) — ← collapse button in sidebar,
  *          hamburger reveals sidebar when collapsed, state in localStorage.
  * v1.7.0: Recurring Expenses, Spending Alerts (with badge), Goals pages.
+ * v1.8.0: Smart insights feed, YoY chart, predicted spend on Dashboard.
+ * v1.9.0: Version badge updated; rich emoji picker for categories.
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -160,7 +162,7 @@ function AppShell({ theme, onToggleTheme }) {
         <div className="sidebar-header">
           <div className="logo">
             💰 Expense Tracker
-            <span className="logo-version">v1.7</span>
+            <span className="logo-version">v1.9</span>
           </div>
         </div>
 

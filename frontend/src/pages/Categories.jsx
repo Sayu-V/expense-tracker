@@ -3,6 +3,7 @@
  * ---------------------
  * v1.3.0 — Manage categories: view, edit (name/emoji/color), delete custom,
  * and create new expense or income categories.
+ * v1.9.0 — Rich emoji picker: categorised tabs + 120+ emojis + custom input.
  *
  * Default categories (is_default=true) can be edited but not deleted.
  */
@@ -16,11 +17,143 @@ const COLOR_PRESETS = [
   '#db2777','#16a34a','#ca8a04','#dc2626','#9333ea',
 ]
 
-const EMOJI_PRESETS = [
-  '🍔','🚗','🏠','💊','🎬','🛒','📦','💼','👛','💻',
-  '🚀','📊','📈','🎁','🏘️','☕','✈️','📚','🎮','💇',
-  '🐾','💡','🔧','🎵','🏋️','🍕','🎯','💰','🌿','🛍️',
+// v1.9.0 — Emoji categories for the rich picker
+const EMOJI_CATEGORIES = [
+  {
+    label: '⭐ All',
+    key: 'all',
+    emojis: null,  // populated below — shows everything
+  },
+  {
+    label: '🍔 Food',
+    key: 'food',
+    emojis: ['🍔','🍕','🌮','🍜','🍣','🍱','🥗','🌯','🥪','🍝','🍛','🥘','🍲','🍤','🦐',
+             '🍦','🧁','🍰','🎂','🍩','🍪','🍫','🍬','🧃','☕','🍵','🧋','🥤','🍺','🥂'],
+  },
+  {
+    label: '🚗 Transport',
+    key: 'transport',
+    emojis: ['🚗','✈️','🚂','🚢','🛵','🚲','🚌','🚕','🏎️','🚁','⛽','🛞','🚦','🛤️','🚤','⛵','🚐','🛻','🚜','🏍️'],
+  },
+  {
+    label: '🏠 Home',
+    key: 'home',
+    emojis: ['🏠','🏘️','🏗️','🔑','🛋️','🛁','🚿','🪴','🧹','🧺','🛏️','🪞','🪟','🚪','💡','🔧','🔨','🪛','📦','🧰'],
+  },
+  {
+    label: '🛒 Shopping',
+    key: 'shopping',
+    emojis: ['🛒','🛍️','👗','👟','👠','💄','👜','💍','🕶️','⌚','💎','🧢','🧥','👔','🩳','👒','🎒','🧣','🪥','🛺'],
+  },
+  {
+    label: '💊 Health',
+    key: 'health',
+    emojis: ['💊','🏥','🏋️','🧘','🩺','💉','🦷','👁️','🩹','🧬','🩻','💪','🧴','🪥','🚑','❤️‍🩹','🫀','🧠','🩼','🏃'],
+  },
+  {
+    label: '🎬 Entertainment',
+    key: 'entertainment',
+    emojis: ['🎬','🎮','🎵','🎸','📚','🎨','🎭','🎪','🎯','🎲','🎻','🎺','🥁','🎤','🎧','🎹','🎠','🎡','🎢','🃏'],
+  },
+  {
+    label: '💼 Work',
+    key: 'work',
+    emojis: ['💼','💻','📊','📈','🖨️','📋','🖊️','📁','📌','📎','🖥️','⌨️','🖱️','📱','📞','📠','🗂️','📝','🗳️','🤝'],
+  },
+  {
+    label: '💰 Finance',
+    key: 'finance',
+    emojis: ['💰','💵','💳','🏦','📈','📉','🪙','💸','💲','🏧','🤑','💹','🏷️','📊','🧾','🏪','🏬','💼','🤝','🎰'],
+  },
+  {
+    label: '🌿 Nature',
+    key: 'nature',
+    emojis: ['🌿','🌱','🌳','🌺','🌸','🍂','🌾','🌊','⛰️','🌅','🌙','☀️','🌈','❄️','🔥','💧','🌍','🌿','🦋','🐾'],
+  },
+  {
+    label: '👨‍👩‍👧 Family',
+    key: 'family',
+    emojis: ['👶','🧒','👦','👧','🧑','👨','👩','👴','👵','🐾','🐶','🐱','🎁','💝','🤗','💒','🏖️','🎉','🪀','🧸'],
+  },
+  {
+    label: '📌 Misc',
+    key: 'misc',
+    emojis: ['⭐','🔔','💬','🚨','📌','🔖','🗓️','⏰','⚡','🎯','🚀','🧲','🔐','🗝️','📡','🔭','🔬','🧪','💫','✨'],
+  },
 ]
+
+// Flatten all emojis for the 'All' tab
+EMOJI_CATEGORIES[0].emojis = EMOJI_CATEGORIES.slice(1).flatMap((c) => c.emojis)
+
+// ── Shared EmojiPicker component (v1.9.0) ─────────────────────────────────────
+function EmojiPicker({ value, onChange }) {
+  const [activeTab, setActiveTab] = useState('all')
+
+  const currentEmojis = EMOJI_CATEGORIES.find((c) => c.key === activeTab)?.emojis ?? EMOJI_CATEGORIES[0].emojis
+
+  return (
+    <div>
+      {/* Category tabs — horizontally scrollable */}
+      <div style={{
+        display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '6px',
+        marginBottom: '8px', scrollbarWidth: 'thin',
+      }}>
+        {EMOJI_CATEGORIES.map((cat) => (
+          <button key={cat.key} type="button"
+            onClick={() => setActiveTab(cat.key)}
+            style={{
+              whiteSpace: 'nowrap', flexShrink: 0,
+              padding: '3px 10px', fontSize: '0.72rem', fontWeight: 600,
+              borderRadius: '999px', cursor: 'pointer',
+              border: activeTab === cat.key ? '2px solid var(--accent)' : '2px solid var(--border)',
+              background: activeTab === cat.key ? 'var(--accent-light)' : 'var(--bg-surface)',
+              color: activeTab === cat.key ? 'var(--accent)' : 'var(--text-secondary)',
+              transition: 'all 0.12s',
+            }}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Emoji grid — scrollable */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: '5px',
+        maxHeight: '148px', overflowY: 'auto', padding: '4px 2px',
+        scrollbarWidth: 'thin',
+      }}>
+        {currentEmojis.map((em) => (
+          <button key={em} type="button"
+            onClick={() => onChange(em)}
+            title={em}
+            style={{
+              width: '34px', height: '34px', fontSize: '1.05rem',
+              borderRadius: 'var(--radius-sm)',
+              border: `2px solid ${value === em ? 'var(--accent)' : 'transparent'}`,
+              background: value === em ? 'var(--accent-light)' : 'var(--bg-surface)',
+              cursor: 'pointer',
+              transition: 'border-color 0.1s, background 0.1s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseEnter={(e) => { if (value !== em) e.currentTarget.style.borderColor = 'var(--border)' }}
+            onMouseLeave={(e) => { if (value !== em) e.currentTarget.style.borderColor = 'transparent' }}
+          >
+            {em}
+          </button>
+        ))}
+      </div>
+
+      {/* Current selection + manual input */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '8px' }}>
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Selected:</span>
+        <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{value}</span>
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
+          style={{ width: '80px', textAlign: 'center', fontSize: '1.05rem' }}
+          maxLength={10} placeholder="or type" title="Type or paste any emoji" />
+      </div>
+    </div>
+  )
+}
 
 // ── Edit Category Modal ───────────────────────────────────────────────────────
 function EditCategoryModal({ category, onSave, onClose }) {
@@ -60,30 +193,10 @@ function EditCategoryModal({ category, onSave, onClose }) {
             <input type="text" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
-          {/* Emoji picker */}
+          {/* Emoji picker — v1.9.0 rich picker */}
           <div style={{ marginBottom: '1rem' }}>
             <label className="form-label">Emoji</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '0.5rem' }}>
-              {EMOJI_PRESETS.map((em) => (
-                <button key={em} type="button"
-                  onClick={() => setEmoji(em)}
-                  style={{
-                    width: '36px', height: '36px', fontSize: '1.1rem', borderRadius: 'var(--radius-sm)',
-                    border: `2px solid ${emoji === em ? 'var(--accent)' : 'var(--border)'}`,
-                    background: emoji === em ? 'var(--accent-light)' : 'var(--bg-surface)',
-                    cursor: 'pointer',
-                  }}>
-                  {em}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Current:</span>
-              <span style={{ fontSize: '1.5rem' }}>{emoji}</span>
-              <input type="text" value={emoji} onChange={(e) => setEmoji(e.target.value)}
-                style={{ width: '80px', textAlign: 'center', fontSize: '1.1rem' }}
-                maxLength={10} placeholder="or type" />
-            </div>
+            <EmojiPicker value={emoji} onChange={setEmoji} />
           </div>
 
           {/* Color picker */}
@@ -171,17 +284,10 @@ function AddCategoryModal({ onSave, onClose }) {
             <input type="text" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Dining Out" />
           </div>
 
+          {/* Emoji picker — v1.9.0 rich picker */}
           <div>
             <label className="form-label">Emoji</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '0.5rem' }}>
-              {EMOJI_PRESETS.slice(0, 20).map((em) => (
-                <button key={em} type="button"
-                  onClick={() => setEmoji(em)}
-                  style={{ width: '34px', height: '34px', fontSize: '1rem', borderRadius: 'var(--radius-sm)', border: `2px solid ${emoji === em ? 'var(--accent)' : 'var(--border)'}`, background: emoji === em ? 'var(--accent-light)' : 'var(--bg-surface)', cursor: 'pointer' }}>
-                  {em}
-                </button>
-              ))}
-            </div>
+            <EmojiPicker value={emoji} onChange={setEmoji} />
           </div>
 
           <div>
