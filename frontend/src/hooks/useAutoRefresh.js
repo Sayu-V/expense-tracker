@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from 'react'
 
-const REFRESH_INTERVAL = 30_000  // 30 seconds
+const REFRESH_INTERVAL = 300_000  // 5 minutes
 
 export function useAutoRefresh(intervalMs = REFRESH_INTERVAL) {
   const [refreshKey, setRefreshKey] = useState(0)

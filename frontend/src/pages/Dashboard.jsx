@@ -26,7 +26,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
-  BarChart, Bar,
+  BarChart, Bar, Treemap,
 } from 'recharts'
 import { reportsApi, budgetsApi, expensesApi, insightsApi, goalsApi } from '../api/index'
 import { usePeriod } from '../context/PeriodContext'
@@ -200,12 +200,12 @@ export default function Dashboard() {
       {/* ── Row 2: Charts ── */}
       <div className="grid-2" style={{ marginBottom: '1.25rem' }}>
 
-        {/* Pie — each slice is clickable */}
+        {/* Spend by Category — Pie (≤6) or Treemap (>6) */}
         <div className="card">
           <div className="section-title">
             Spend by Category
             <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', fontWeight: 400, marginLeft: '0.5rem' }}>
-              click a slice to drill down
+              {breakdown.length > 6 ? 'tile size = spend amount' : 'click a slice to drill down'}
             </span>
           </div>
           {breakdown.length === 0 ? (
@@ -213,7 +213,7 @@ export default function Dashboard() {
               <div className="empty-state-icon">📭</div>
               No expenses in this period.
             </div>
-          ) : (
+          ) : breakdown.length <= 6 ? (
             <ResponsiveContainer width="100%" height={230}>
               <PieChart>
                 <Pie
@@ -238,6 +238,56 @@ export default function Dashboard() {
                   labelStyle={ct.tooltipLabelStyle}
                 />
               </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            /* Treemap for 7+ categories */
+            <ResponsiveContainer width="100%" height={230}>
+              <Treemap
+                data={breakdown.map(b => ({
+                  name: b.category_name,
+                  size: b.total,
+                  color: b.category_color,
+                  category_id: b.category_id,
+                  percentage: b.percentage,
+                }))}
+                dataKey="size"
+                stroke="#fff"
+                onClick={(node) => node.category_id && drillToCategory(node.category_id)}
+                style={{ cursor: 'pointer' }}
+                content={({ x, y, width, height, name, size, color, percentage }) => {
+                  const showLabel = width > 50 && height > 30
+                  const showAmt   = width > 70 && height > 48
+                  return (
+                    <g>
+                      <rect
+                        x={x} y={y} width={width} height={height}
+                        style={{ fill: color, stroke: '#fff', strokeWidth: 2, opacity: 0.88 }}
+                      />
+                      {showLabel && (
+                        <text x={x + width / 2} y={y + height / 2 - (showAmt ? 8 : 0)}
+                          textAnchor="middle" dominantBaseline="middle"
+                          style={{ fontSize: Math.min(13, width / 6), fontWeight: 600, fill: '#fff', pointerEvents: 'none' }}>
+                          {name}
+                        </text>
+                      )}
+                      {showAmt && (
+                        <text x={x + width / 2} y={y + height / 2 + 10}
+                          textAnchor="middle" dominantBaseline="middle"
+                          style={{ fontSize: Math.min(11, width / 7), fill: 'rgba(255,255,255,0.85)', pointerEvents: 'none' }}>
+                          {percentage}%
+                        </text>
+                      )}
+                    </g>
+                  )
+                }}
+              >
+                <Tooltip
+                  formatter={(v) => `₹${v.toLocaleString('en-IN')}`}
+                  contentStyle={ct.tooltipStyle}
+                  itemStyle={ct.tooltipItemStyle}
+                  labelStyle={ct.tooltipLabelStyle}
+                />
+              </Treemap>
             </ResponsiveContainer>
           )}
         </div>

@@ -38,7 +38,7 @@ const FEATURES = [
   '⚙️  Import Rules — smart auto-categorisation',
 ]
 
-const SPLASH_DURATION = 3000  // ms before auto-dismiss
+const SPLASH_DURATION = 7000  // ms before auto-dismiss
 
 export default function SplashScreen({ onDismiss }) {
   const [progress, setProgress] = useState(0)
