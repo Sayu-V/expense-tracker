@@ -2,6 +2,7 @@
  * Import.jsx
  * ----------
  * v2.0.0 — Bank Statement Import page.
+ * v2.1.0 — Match source badges + "Save as rule" quick shortcut.
  *
  * Three-step flow:
  *   Step 1 — Upload  : drag-and-drop or click to select PDF / CSV
@@ -30,6 +31,9 @@ const incomeSourcesApi = {
   update: (id, data)    => client.put(`/income-sources/${id}`, data),
   delete: (id)          => client.delete(`/income-sources/${id}`),
 }
+const quickRuleApi = {
+  create: (data)        => client.post('/import-rules/quick', data),
+}
 
 // ── Type badge styles ─────────────────────────────────────────────────────────
 const TYPE_COLORS = {
@@ -43,6 +47,23 @@ const CONFIDENCE_DOT = {
   high:   { color: '#16a34a', title: 'High confidence' },
   medium: { color: '#d97706', title: 'Medium confidence' },
   low:    { color: '#ef4444', title: 'Low confidence — please verify' },
+}
+
+// ── Match source badge styles ──────────────────────────────────────────────────
+const MATCH_SOURCE_BADGE = {
+  rule:          { bg: '#eff6ff', color: '#2563eb' },
+  income_source: { bg: '#f0fdf4', color: '#15803d' },
+  builtin:       { bg: '#f9fafb', color: '#6b7280' },
+  heuristic:     { bg: '#fffbeb', color: '#92400e' },
+  flagged:       { bg: '#fef2f2', color: '#dc2626' },
+}
+function matchSourceLabel(row) {
+  const src = row.match_source
+  if (src === 'rule')          return row.matched_rule_name ? `🏷 ${row.matched_rule_name.slice(0, 18)}` : '🏷 Rule'
+  if (src === 'income_source') return '📥 Source'
+  if (src === 'builtin')       return '🤖 Built-in'
+  if (src === 'heuristic')     return '🔍 Heuristic'
+  return '⚠️ Review'
 }
 
 const SOURCE_TYPES = ['salary', 'rent', 'business', 'interest', 'other']
@@ -165,14 +186,125 @@ function UploadStep({ onPreview }) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// Quick Rule Modal — "Save as rule" shortcut from preview table
+// ═════════════════════════════════════════════════════════════════════════════
+function QuickRuleModal({ row, categories, onClose, onSaved }) {
+  const defaultKeyword = (row.merchant || row.description || '').toUpperCase().slice(0, 50)
+  const [keyword,    setKeyword]    = useState(defaultKeyword)
+  const [ruleName,   setRuleName]   = useState(`Auto: ${(row.merchant || row.description || '').slice(0, 30)}`)
+  const [setType,    setSetType]    = useState(row.type)
+  const [categoryId, setCategoryId] = useState(String(row.suggested_category_id || ''))
+  const [applyRetro, setApplyRetro] = useState(false)
+  const [saving,     setSaving]     = useState(false)
+  const [error,      setError]      = useState(null)
+
+  const filteredCats = categories.filter(c =>
+    setType === 'income' ? c.category_type === 'income' : c.category_type === 'expense'
+  )
+
+  const handleSave = async () => {
+    if (!keyword.trim()) return
+    setSaving(true); setError(null)
+    try {
+      await quickRuleApi.create({
+        rule_name:           ruleName.trim(),
+        description_keyword: keyword.trim(),
+        set_type:            setType,
+        category_id:         categoryId ? Number(categoryId) : null,
+        apply_retroactive:   applyRetro,
+      })
+      onSaved()
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to save rule.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+    }}>
+      <div style={{
+        background: 'var(--color-card)', borderRadius: 12, padding: '1.5rem',
+        width: '100%', maxWidth: 500, boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+        margin: '0 1rem',
+      }}>
+        <h3 style={{ margin: '0 0 0.4rem' }}>💾 Save as Rule</h3>
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginTop: 0, marginBottom: '1.25rem' }}>
+          Future imports matching this keyword will be auto-classified with these settings.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+            Rule Name
+            <input value={ruleName} onChange={e => setRuleName(e.target.value)}
+              style={{ display: 'block', width: '100%', marginTop: 4, padding: '7px 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-input)', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+          </label>
+
+          <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+            Match when description contains
+            <input value={keyword} onChange={e => setKeyword(e.target.value.toUpperCase())}
+              placeholder="KEYWORD"
+              style={{ display: 'block', width: '100%', marginTop: 4, padding: '7px 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-input)', fontSize: '0.85rem', boxSizing: 'border-box', fontFamily: 'monospace', letterSpacing: '0.03em' }} />
+          </label>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+              Set Type
+              <select value={setType} onChange={e => setSetType(e.target.value)}
+                style={{ display: 'block', width: '100%', marginTop: 4, padding: '7px 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-input)', fontSize: '0.85rem' }}>
+                {Object.entries(TYPE_COLORS).map(([t, s]) => <option key={t} value={t}>{s.label}</option>)}
+              </select>
+            </label>
+            <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+              Set Category
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
+                style={{ display: 'block', width: '100%', marginTop: 4, padding: '7px 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-input)', fontSize: '0.85rem' }}>
+                <option value="">— none —</option>
+                {filteredCats.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <label style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}>
+            <input type="checkbox" checked={applyRetro} onChange={e => setApplyRetro(e.target.checked)} />
+            Also re-classify existing transactions that match this keyword
+          </label>
+        </div>
+
+        {error && (
+          <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, color: '#dc2626', fontSize: '0.82rem' }}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.25rem' }}>
+          <button onClick={onClose} style={{ padding: '0.5rem 1rem', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-card)', cursor: 'pointer' }}>
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={saving || !keyword.trim()} style={{ padding: '0.5rem 1.25rem', borderRadius: 8, border: 'none', background: 'var(--color-accent)', color: '#fff', fontWeight: 600, cursor: saving || !keyword.trim() ? 'not-allowed' : 'pointer' }}>
+            {saving ? 'Saving…' : '💾 Save Rule'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // Step 2 — Preview table
 // ═════════════════════════════════════════════════════════════════════════════
 function PreviewStep({ preview, onConfirm, onBack }) {
-  const [rows, setRows]         = useState(() => preview.transactions.map(t => ({ ...t })))
-  const [categories, setCats]   = useState([])
-  const [filter, setFilter]     = useState('all')   // all | flagged | income | expense | investment | transfer
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState(null)
+  const [rows, setRows]               = useState(() => preview.transactions.map(t => ({ ...t })))
+  const [categories, setCats]         = useState([])
+  const [filter, setFilter]           = useState('all')   // all | flagged | income | expense | investment | transfer
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState(null)
+  const [editedRows, setEditedRows]   = useState(new Set())
+  const [quickRuleRow, setQuickRuleRow] = useState(null)   // row currently being saved as rule
+  const [savedRules, setSavedRules]   = useState(new Set()) // row_ids that already have a saved rule
 
   useEffect(() => {
     categoriesApi.list().then(r => setCats(r.data)).catch(() => {})
@@ -180,6 +312,7 @@ function PreviewStep({ preview, onConfirm, onBack }) {
 
   const updateRow = (row_id, patch) => {
     setRows(prev => prev.map(r => r.row_id === row_id ? { ...r, ...patch } : r))
+    setEditedRows(prev => new Set([...prev, row_id]))
   }
 
   const filteredRows = rows.filter(r => {
@@ -288,6 +421,7 @@ function PreviewStep({ preview, onConfirm, onBack }) {
               <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600 }}>Type</th>
               <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600 }}>Category</th>
               <th style={{ padding: '8px 10px', textAlign: 'center', fontWeight: 600 }}>Conf.</th>
+              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>Source</th>
             </tr>
           </thead>
           <tbody>
@@ -393,6 +527,39 @@ function PreviewStep({ preview, onConfirm, onBack }) {
                       style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: cc.color }}
                     />
                   </td>
+
+                  {/* Match source badge + Save as rule */}
+                  <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                    {row.match_source && (() => {
+                      const style = MATCH_SOURCE_BADGE[row.match_source] || MATCH_SOURCE_BADGE.flagged
+                      return (
+                        <span style={{
+                          display: 'inline-block', fontSize: '0.68rem', fontWeight: 600,
+                          background: style.bg, color: style.color,
+                          borderRadius: 999, padding: '1px 7px', whiteSpace: 'nowrap',
+                        }}>
+                          {matchSourceLabel(row)}
+                        </span>
+                      )
+                    })()}
+                    {/* Show "Save as rule" when row is flagged or manually edited and not already saved */}
+                    {(row.is_flagged || editedRows.has(row.row_id)) && !row.is_duplicate && !savedRules.has(row.row_id) && (
+                      <button
+                        onClick={() => setQuickRuleRow(row)}
+                        title="Save classification as a reusable rule"
+                        style={{
+                          marginLeft: 6, padding: '1px 7px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 600,
+                          border: '1px solid #a78bfa', background: '#f5f3ff', color: '#7c3aed', cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        💾 Save as rule
+                      </button>
+                    )}
+                    {savedRules.has(row.row_id) && (
+                      <span style={{ marginLeft: 6, fontSize: '0.68rem', color: '#16a34a', fontWeight: 600 }}>✓ Rule saved</span>
+                    )}
+                  </td>
                 </tr>
               )
             })}
@@ -428,6 +595,23 @@ function PreviewStep({ preview, onConfirm, onBack }) {
           {loading ? 'Importing…' : `✅ Import ${toImport} transactions`}
         </button>
       </div>
+
+      {/* Quick Rule Modal */}
+      {quickRuleRow && (() => {
+        // Use live row state for type/category (user may have changed them)
+        const liveRow = rows.find(r => r.row_id === quickRuleRow.row_id) || quickRuleRow
+        return (
+          <QuickRuleModal
+            row={liveRow}
+            categories={categories}
+            onClose={() => setQuickRuleRow(null)}
+            onSaved={() => {
+              setSavedRules(prev => new Set([...prev, quickRuleRow.row_id]))
+              setQuickRuleRow(null)
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }

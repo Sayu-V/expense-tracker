@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.database import create_db_and_tables, engine
-from app.models import Category, IncomeSource  # noqa: F401 — ensures SQLModel creates income_sources table
-from app.routers import expenses, categories, budgets, reports, insights, chat, recurring, alerts, goals, imports
+from app.models import Category, IncomeSource, ImportRule  # noqa: F401 — ensures SQLModel creates all tables
+from app.routers import expenses, categories, budgets, reports, insights, chat, recurring, alerts, goals, imports, rules
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="Personal finance tracking with FastAPI, SQLModel, and PostgreSQL",
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
@@ -163,6 +163,7 @@ app.include_router(recurring.router,  prefix="/api/v1")   # v1.7.0
 app.include_router(alerts.router,     prefix="/api/v1")   # v1.7.0
 app.include_router(goals.router,      prefix="/api/v1")   # v1.7.0
 app.include_router(imports.router,    prefix="/api/v1")   # v2.0.0
+app.include_router(rules.router,      prefix="/api/v1")   # v2.1.0
 
 
 # ---------------------------------------------------------------------------

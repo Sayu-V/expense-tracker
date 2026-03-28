@@ -500,6 +500,106 @@ class TrendPoint(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# v2.1.0 — Import Rules schemas
+# ---------------------------------------------------------------------------
+
+class RuleCondition(BaseModel):
+    """
+    One condition inside an ImportRule.
+    field    : 'description' | 'amount' | 'direction'
+    operator : 'contains' | 'not_contains' | 'starts_with' | 'gt' | 'lt' | 'gte' | 'lte' | 'eq'
+    value    : string (amounts as string, direction as 'credit' | 'debit')
+    """
+    field: str
+    operator: str
+    value: str
+
+
+class RuleAction(BaseModel):
+    """
+    One action inside an ImportRule.
+    action : 'set_type' | 'set_category' | 'rename' | 'skip'
+    value  : type string, category_id as string, new description, or None for skip
+    """
+    action: str
+    value: Optional[str] = None
+
+
+class ImportRuleCreate(BaseModel):
+    name: str
+    priority: int = 5
+    condition_logic: str = "OR"          # 'OR' | 'AND'
+    conditions: list[RuleCondition]
+    actions: list[RuleAction]
+    apply_retroactive: bool = False      # Re-classify matching existing transactions
+
+    @field_validator("condition_logic")
+    @classmethod
+    def valid_logic(cls, v: str) -> str:
+        if v not in ("OR", "AND"):
+            raise ValueError("condition_logic must be 'OR' or 'AND'")
+        return v
+
+    @field_validator("priority")
+    @classmethod
+    def valid_priority(cls, v: int) -> int:
+        if not 1 <= v <= 100:
+            raise ValueError("priority must be 1–100")
+        return v
+
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("name cannot be blank")
+        return v.strip()
+
+
+class ImportRuleUpdate(BaseModel):
+    name: Optional[str] = None
+    priority: Optional[int] = None
+    is_active: Optional[bool] = None
+    condition_logic: Optional[str] = None
+    conditions: Optional[list[RuleCondition]] = None
+    actions: Optional[list[RuleAction]] = None
+
+
+class ImportRuleRead(BaseModel):
+    id: int
+    name: str
+    priority: int
+    is_active: bool
+    condition_logic: str
+    conditions: list[RuleCondition]
+    actions: list[RuleAction]
+    match_count: int
+    last_matched_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class RetroactiveResult(BaseModel):
+    """Returned after applying a rule retroactively to existing transactions."""
+    updated_count: int
+    rule_id: int
+    rule_name: str
+
+
+class QuickRuleCreate(BaseModel):
+    """
+    Payload for the 'Save as rule' shortcut in the import preview table.
+    Creates a single-condition 'description contains keyword' rule instantly.
+    """
+    rule_name: str
+    description_keyword: str     # The keyword to match (extracted from transaction)
+    set_type: str                # Final type the user selected
+    category_id: Optional[int] = None
+    rename_to: Optional[str] = None   # Optional: rename matching descriptions
+    apply_retroactive: bool = False
+
+
+# ---------------------------------------------------------------------------
 # v2.0.0 — Bank Statement Import schemas
 # ---------------------------------------------------------------------------
 
@@ -525,6 +625,10 @@ class ImportTransaction(BaseModel):
     flag_reason: Optional[str] = None        # Why it was flagged
     ref_no: Optional[str] = None             # Bank reference/cheque number
     skip: bool = False                        # User chose to skip this row
+    # v2.1.0 — rule engine tracing
+    match_source: str = "unknown"             # 'rule' | 'income_source' | 'builtin' | 'heuristic' | 'flagged'
+    matched_rule_id: Optional[int] = None    # Which ImportRule matched (if any)
+    matched_rule_name: Optional[str] = None  # Rule display name
 
 
 class ImportPreviewResponse(BaseModel):

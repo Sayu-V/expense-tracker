@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Assisted Import — v2.1.0 Mockup</title>
+<style>
+  :root {
+    --accent: #6366f1; --accent-light: #eef2ff;
+    --green: #16a34a; --green-light: #f0fdf4;
+    --red: #dc2626; --red-light: #fef2f2;
+    --yellow: #d97706; --yellow-light: #fffbeb;
+    --blue: #2563eb; --blue-light: #eff6ff;
+    --purple: #7c3aed; --purple-light: #f5f3ff;
+    --teal: #0d9488; --teal-light: #f0fdfa;
+    --orange: #ea580c; --orange-light: #fff7ed;
+    --border: #e5e7eb; --bg: #f9fafb;
+    --card: #ffffff; --text: #111827; --muted: #6b7280;
+    --ai: #7c3aed; --ai-light: #faf5ff; --ai-border: #c4b5fd;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  .page { max-width: 960px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  h1 { font-size: 1.4rem; font-weight: 800; }
+  h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
+  h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin: 0.25rem 0 1.75rem; }
+  .badge-ai { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--ai-light); color: var(--ai); border: 1px solid var(--ai-border); border-radius: 999px; padding: 2px 10px; font-size: 0.72rem; font-weight: 700; }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.75rem; gap: 0; overflow-x: auto; }
+  .tab { padding: 0.65rem 1.25rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: all 0.15s; }
+  .tab.active { color: var(--ai); border-bottom-color: var(--ai); }
+  .tab-panel { display: none; } .tab-panel.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem; }
+  .card.ai-card { border-color: var(--ai-border); background: var(--ai-light); }
+
+  /* Flow steps */
+  .flow { display: flex; flex-direction: column; gap: 0.5rem; }
+  .flow-step { display: flex; gap: 1rem; align-items: flex-start; padding: 0.85rem 1rem; border-radius: 10px; }
+  .flow-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; flex-shrink: 0; color: #fff; margin-top: 1px; }
+  .flow-step h4 { font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .flow-step p { font-size: 0.8rem; color: var(--muted); }
+  .flow-arrow { text-align: center; color: var(--muted); font-size: 1.1rem; padding: 0.1rem 0; }
+  .fs-grey   { background: #f3f4f6; } .fs-grey .flow-num   { background: #9ca3af; }
+  .fs-grey2  { background: #f3f4f6; } .fs-grey2 .flow-num  { background: #9ca3af; }
+  .fs-grey3  { background: #f3f4f6; } .fs-grey3 .flow-num  { background: #9ca3af; }
+  .fs-ai     { background: var(--ai-light); border: 1.5px solid var(--ai-border); } .fs-ai .flow-num { background: var(--ai); }
+  .fs-red    { background: var(--red-light); } .fs-red .flow-num { background: var(--red); }
+  .flow-step.highlighted { border: 2px solid var(--ai); background: var(--ai-light); }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { padding: 9px 10px; text-align: left; font-weight: 600; background: var(--bg); border-bottom: 2px solid var(--border); white-space: nowrap; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr.row-rule { background: #f0fdf4; }
+  tr.row-builtin { background: #fafafa; }
+  tr.row-ai { background: var(--ai-light); }
+  tr.row-flag { background: var(--red-light); }
+
+  /* Source badges */
+  .src { display: inline-flex; align-items: center; gap: 3px; font-size: 0.68rem; border-radius: 999px; padding: 2px 8px; font-weight: 700; white-space: nowrap; }
+  .src-rule    { background: #dcfce7; color: #15803d; }
+  .src-builtin { background: #e0e7ff; color: #3730a3; }
+  .src-ai      { background: var(--ai-light); color: var(--ai); border: 1px solid var(--ai-border); }
+  .src-flag    { background: var(--red-light); color: var(--red); }
+
+  /* Type chips */
+  .tc { font-size: 0.72rem; border-radius: 999px; padding: 2px 9px; font-weight: 700; }
+  .tc-exp { background: var(--red-light); color: var(--red); }
+  .tc-inc { background: var(--green-light); color: var(--green); }
+  .tc-inv { background: var(--blue-light); color: var(--blue); }
+
+  /* Amounts */
+  .amt-neg { color: var(--red); font-weight: 700; }
+  .amt-pos { color: var(--green); font-weight: 700; }
+
+  /* AI tooltip / explain box */
+  .ai-explain { display: none; background: var(--ai-light); border: 1px solid var(--ai-border); border-radius: 8px; padding: 0.65rem 0.85rem; margin-top: 0.35rem; font-size: 0.76rem; color: var(--ai); line-height: 1.5; }
+  .ai-explain.show { display: block; }
+  .explain-btn { font-size: 0.68rem; color: var(--ai); border: 1px solid var(--ai-border); background: var(--ai-light); border-radius: 999px; padding: 1px 8px; cursor: pointer; font-weight: 600; margin-left: 4px; }
+
+  /* Confidence bar */
+  .conf-bar { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; }
+  .bar { height: 6px; border-radius: 3px; flex: 1; background: var(--border); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+
+  /* AI insights panel */
+  .insight-item { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.85rem 1rem; border-radius: 9px; margin-bottom: 0.6rem; border: 1px solid transparent; }
+  .insight-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .insight-msg { font-size: 0.85rem; }
+  .insight-msg strong { font-weight: 700; }
+  .insight-msg p { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+  .ii-warn  { background: var(--yellow-light); border-color: #fde68a; }
+  .ii-info  { background: var(--blue-light);   border-color: #bfdbfe; }
+  .ii-good  { background: var(--green-light);  border-color: #bbf7d0; }
+  .ii-ai    { background: var(--ai-light);     border-color: var(--ai-border); }
+  .ii-orange{ background: var(--orange-light); border-color: #fed7aa; }
+
+  /* Rule suggestion card */
+  .rule-suggest { background: var(--ai-light); border: 1.5px dashed var(--ai-border); border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem; }
+  .rule-suggest-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .pill { display: inline-flex; align-items: center; gap: 0.25rem; padding: 2px 9px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; }
+  .pill-if   { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .pill-then { background: var(--green-light); color: var(--green); border: 1px solid #86efac; }
+  .rule-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+  .accept-btn { padding: 4px 12px; background: var(--ai); color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 0.78rem; font-weight: 700; }
+  .dismiss-btn { padding: 4px 10px; background: none; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; color: var(--muted); }
+
+  /* AI chat bubble */
+  .chat-area { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.65rem; padding: 1rem; background: var(--bg); border-radius: 10px; border: 1px solid var(--border); margin-bottom: 0.75rem; }
+  .msg { max-width: 85%; padding: 0.65rem 0.9rem; border-radius: 12px; font-size: 0.85rem; line-height: 1.5; }
+  .msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-radius: 12px 12px 2px 12px; }
+  .msg.ai { align-self: flex-start; background: var(--card); border: 1px solid var(--ai-border); color: var(--text); border-radius: 12px 12px 12px 2px; }
+  .msg.ai .ai-label { font-size: 0.68rem; color: var(--ai); font-weight: 700; margin-bottom: 3px; display: flex; align-items: center; gap: 4px; }
+  .chat-input { display: flex; gap: 0.5rem; }
+  .chat-input input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; background: var(--card); }
+  .chat-input button { padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+
+  /* Buttons */
+  .btn { padding: 0.55rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-size: 0.85rem; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ai { background: var(--ai); color: #fff; }
+  .btn-outline { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+
+  /* Processing animation */
+  .processing { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--ai-light); border: 1px solid var(--ai-border); border-radius: 10px; margin-bottom: 1rem; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--ai-border); border-top-color: var(--ai); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .processing-text { font-size: 0.85rem; }
+  .processing-text strong { color: var(--ai); }
+  .step-list { margin-top: 4px; font-size: 0.78rem; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+  .step-done { color: var(--green); }
+  .step-active { color: var(--ai); font-weight: 600; }
+  .step-pending { color: var(--border); }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+  .stat-num { font-size: 2rem; font-weight: 800; }
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  /* Section divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.25rem;flex-wrap:wrap">
+    <h1>🤖 AI-Assisted Import</h1>
+    <span class="badge-ai">✦ v2.1.0 Mockup</span>
+  </div>
+  <p class="subtitle">AI fills the gaps rules can't — unknown merchants, ambiguous descriptions, pattern recognition, and post-import insights.</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="tab('flow')">🔄 How It Works</div>
+    <div class="tab" onclick="tab('preview')">👁️ Preview Table</div>
+    <div class="tab" onclick="tab('processing')">⚙️ Processing Screen</div>
+    <div class="tab" onclick="tab('insights')">💡 AI Insights</div>
+    <div class="tab" onclick="tab('rules')">📋 Rule Suggestions</div>
+    <div class="tab" onclick="tab('chat')">💬 Ask AI</div>
+  </div>
+
+  <!-- ══════════ TAB 1: How It Works ══════════ -->
+  <div class="tab-panel active" id="t-flow">
+
+    <div class="card" style="margin-bottom:1.25rem">
+      <h2>Classification waterfall — where AI plugs in</h2>
+      <div class="flow">
+        <div class="flow-step fs-grey">
+          <div class="flow-num">1</div>
+          <div><h4>User-defined Rules</h4><p>Custom IF/THEN rules, highest priority. First match wins immediately.</p></div>
+        </div>
+        <div class="flow-arrow">↓ no rule matched</div>
+        <div class="flow-step fs-grey2">
+          <div class="flow-num">2</div>
+          <div><h4>Income Sources</h4><p>User-saved sender keywords (Rahul Sharma → Rent). Direct, high-confidence match.</p></div>
+        </div>
+        <div class="flow-arrow">↓ no source matched</div>
+        <div class="flow-step fs-grey3">
+          <div class="flow-num">3</div>
+          <div><h4>Built-in Keyword Rules</h4><p>50+ merchant patterns: ZOMATO→Food, AMAZON→Shopping, SALARY→Income, etc.</p></div>
+        </div>
+        <div class="flow-arrow">↓ not matched or low confidence</div>
+        <div class="flow-step fs-ai highlighted">
+          <div class="flow-num">4</div>
+          <div>
+            <h4 style="color:var(--ai)">✦ AI Categoriser — NEW in v2.1.0</h4>
+            <p>All unclassified / low-confidence rows are sent to Claude in a single batch call. Claude uses the description, amount, and debit/credit signal to classify each one with reasoning. Handles local Indian merchants, cryptic codes, and contextual patterns.</p>
+            <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+              <span class="pill pill-then">✓ Cleans descriptions</span>
+              <span class="pill pill-then">✓ Classifies unknowns</span>
+              <span class="pill pill-then">✓ Explains reasoning</span>
+              <span class="pill pill-then">✓ Suggests new rules</span>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓ AI is also unsure (&lt;60% confidence)</div>
+        <div class="flow-step fs-red">
+          <div class="flow-num">5</div>
+          <div><h4>Flag for manual review</h4><p>Only rows AI couldn't confidently classify. Much smaller than before — typically &lt;5% of transactions.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>🧠 What AI does per transaction</h3>
+        <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.5rem;font-size:0.82rem">
+          <div style="display:flex;gap:0.5rem"><span style="color:var(--green);font-weight:700">✓</span><span><strong>Classifies type</strong> — expense, income, investment, or transfer</span></div>
+          <div style="display:flex;gap:0.5rem"><span style="color:var(--green);font-weight:700">✓</span><span><strong>Assigns category</strong> — matched to your existing category list</span></div>
+          <div style="display:flex;gap:0.5rem"><span style="color:var(--green);font-weight:700">✓</span><span><strong>Cleans the description</strong> — "UPI/DR/771234/PETROLBUNK/OKAXIS" → "Petrol Bunk"</span></div>
+          <div style="display:flex;gap:0.5rem"><span style="color:var(--green);font-weight:700">✓</span><span><strong>Gives a confidence score</strong> — shown as a colour-coded bar</span></div>
+          <div style="display:flex;gap:0.5rem"><span style="color:var(--green);font-weight:700">✓</span><span><strong>Explains its reasoning</strong> — expandable "Why?" tooltip per row</span></div>
+          <div style="display:flex;gap:0.5rem"><span style="color:var(--green);font-weight:700">✓</span><span><strong>Suggests a rule</strong> — "Create rule for this pattern?"</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>⚡ Performance & Cost</h3>
+        <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.5rem;font-size:0.82rem">
+          <div style="display:flex;gap:0.5rem"><span>📦</span><span><strong>Batch processing</strong> — all unknowns sent in one API call, not one per row</span></div>
+          <div style="display:flex;gap:0.5rem"><span>🔢</span><span><strong>Typical batch size</strong> — 20–60 rows (rest handled by rules)</span></div>
+          <div style="display:flex;gap:0.5rem"><span>⏱️</span><span><strong>Processing time</strong> — 3–8 seconds for a full statement</span></div>
+          <div style="display:flex;gap:0.5rem"><span>💰</span><span><strong>Cost</strong> — ~₹0.10–0.30 per statement import (Haiku model)</span></div>
+          <div style="display:flex;gap:0.5rem"><span>🔄</span><span><strong>Cached</strong> — same merchant never sent twice; rule created automatically after first AI classification</span></div>
+          <div style="display:flex;gap:0.5rem"><span>🔒</span><span><strong>Privacy</strong> — only description text sent, never amounts or account numbers</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card ai-card">
+      <h3>🤖 Example AI prompt (sent internally)</h3>
+      <div style="background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:1rem;font-size:0.78rem;font-family:monospace;line-height:1.7;margin-top:0.5rem">
+        <span style="color:#89dceb">System:</span> You are a bank transaction classifier for an Indian personal finance app.<br>
+        Classify each transaction. For each, return: type (expense/income/investment/transfer),<br>
+        category_name (from the provided list), clean_description, confidence (0-100), reasoning.<br><br>
+        <span style="color:#89dceb">Available categories:</span> Food, Transport, Housing, Health, Entertainment,<br>
+        Shopping, Other, Salary, Rental Income, Business Income, Fuel, Insurance...<br><br>
+        <span style="color:#89dceb">Transactions to classify:</span><br>
+        1. "UPI/DR/884123/MALLIKARJ/OKAXIS" — Debit ₹450<br>
+        2. "NEFT/CR/SURESH KUMAR TRADING CO" — Credit ₹38,000<br>
+        3. "UPI/DR/991233/PETROLBUNK/OKHDFC" — Debit ₹2,100<br>
+        4. "ATM/WDL/KANARA BANK BRANCH" — Debit ₹5,000<br>
+        5. "IMPS/331209/KAVITHA SILKS/ICICI" — Debit ₹8,500
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 2: Preview Table ══════════ -->
+  <div class="tab-panel" id="t-preview">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+        <div>
+          <h2 style="margin:0">Preview — canara_jan2026.pdf</h2>
+          <p style="color:var(--muted);font-size:0.8rem;margin-top:2px">47 transactions · Rules: 31 · AI: 12 · Review: 4</p>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <span style="background:var(--green-light);color:var(--green);border-radius:999px;padding:2px 10px;font-size:0.75rem;font-weight:700">31 by rules</span>
+          <span class="badge-ai">✦ 12 by AI</span>
+          <span style="background:var(--red-light);color:var(--red);border-radius:999px;padding:2px 10px;font-size:0.75rem;font-weight:700">⚠️ 4 need review</span>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:10px">
+        <table>
+          <thead><tr>
+            <th style="width:30px"></th>
+            <th>Date</th>
+            <th>Description</th>
+            <th style="text-align:right">Amount</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Confidence</th>
+            <th>Source</th>
+          </tr></thead>
+          <tbody>
+
+            <!-- Rule matched -->
+            <tr class="row-rule">
+              <td><input type="checkbox" /></td>
+              <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">03/01/26</td>
+              <td>
+                <div style="font-weight:600">Zomato</div>
+                <div style="font-size:0.72rem;color:var(--muted)">UPI/DR/498123/ZOMATO/OKUPI</div>
+              </td>
+              <td class="amt-neg" style="text-align:right">−₹320</td>
+              <td><span class="tc tc-exp">Expense</span></td>
+              <td>🍔 Food</td>
+              <td><div class="conf-bar"><div class="bar"><div class="bar-fill" style="width:98%;background:var(--green)"></div></div><span style="font-size:0.7rem;color:var(--green);font-weight:700">98%</span></div></td>
+              <td><span class="src src-rule">Rule #1</span></td>
+            </tr>
+
+            <!-- AI classified — local merchant -->
+            <tr class="row-ai">
+              <td><input type="checkbox" /></td>
+              <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">05/01/26</td>
+              <td>
+                <div style="font-weight:600;color:var(--ai)">✦ Petrol Bunk <span style="font-weight:400;font-size:0.72rem;color:var(--muted)">(AI cleaned)</span></div>
+                <div style="font-size:0.72rem;color:var(--muted)">UPI/DR/991233/PETROLBUNK/OKHDFC</div>
+                <button class="explain-btn" onclick="toggleExplain('e1')">Why?</button>
+                <div class="ai-explain" id="e1">
+                  🤖 "PETROLBUNK" in the UPI merchant slot is a common shorthand for petrol/fuel stations in Karnataka. Debit of ₹2,100 is consistent with a fuel fill-up. Classified as Fuel → Transport.
+                </div>
+              </td>
+              <td class="amt-neg" style="text-align:right">−₹2,100</td>
+              <td><span class="tc tc-exp">Expense</span></td>
+              <td>⛽ Fuel</td>
+              <td><div class="conf-bar"><div class="bar"><div class="bar-fill" style="width:88%;background:var(--teal)"></div></div><span style="font-size:0.7rem;color:var(--teal);font-weight:700">88%</span></div></td>
+              <td><span class="src src-ai">✦ AI</span></td>
+            </tr>
+
+            <!-- AI classified — business income -->
+            <tr class="row-ai">
+              <td><input type="checkbox" /></td>
+              <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">05/01/26</td>
+              <td>
+                <div style="font-weight:600;color:var(--ai)">✦ Suresh Kumar Trading <span style="font-weight:400;font-size:0.72rem;color:var(--muted)">(AI cleaned)</span></div>
+                <div style="font-size:0.72rem;color:var(--muted)">NEFT/CR/SURESH KUMAR TRADING CO</div>
+                <button class="explain-btn" onclick="toggleExplain('e2')">Why?</button>
+                <div class="ai-explain" id="e2">
+                  🤖 "TRADING CO" suffix strongly indicates a business entity. This is a credit (deposit) of ₹38,000 — likely a business payment or trade receivable. Classified as Business Income. Large amount may warrant user confirmation.
+                </div>
+              </td>
+              <td class="amt-pos" style="text-align:right">+₹38,000</td>
+              <td><span class="tc tc-inc">Income</span></td>
+              <td>🏢 Business</td>
+              <td><div class="conf-bar"><div class="bar"><div class="bar-fill" style="width:82%;background:var(--teal)"></div></div><span style="font-size:0.7rem;color:var(--teal);font-weight:700">82%</span></div></td>
+              <td><span class="src src-ai">✦ AI</span></td>
+            </tr>
+
+            <!-- AI classified — local silk shop -->
+            <tr class="row-ai">
+              <td><input type="checkbox" /></td>
+              <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">06/01/26</td>
+              <td>
+                <div style="font-weight:600;color:var(--ai)">✦ Kavitha Silks</div>
+                <div style="font-size:0.72rem;color:var(--muted)">IMPS/331209/KAVITHA SILKS/ICICI</div>
+                <button class="explain-btn" onclick="toggleExplain('e3')">Why?</button>
+                <div class="ai-explain" id="e3">
+                  🤖 "SILKS" indicates a clothing/textile retailer — common in South India. Payment of ₹8,500 is typical for saree or occasion-wear purchase. Classified as Shopping.
+                </div>
+              </td>
+              <td class="amt-neg" style="text-align:right">−₹8,500</td>
+              <td><span class="tc tc-exp">Expense</span></td>
+              <td>🛍️ Shopping</td>
+              <td><div class="conf-bar"><div class="bar"><div class="bar-fill" style="width:79%;background:var(--teal)"></div></div><span style="font-size:0.7rem;color:var(--teal);font-weight:700">79%</span></div></td>
+              <td><span class="src src-ai">✦ AI</span></td>
+            </tr>
+
+            <!-- Built-in matched -->
+            <tr class="row-builtin">
+              <td><input type="checkbox" /></td>
+              <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">07/01/26</td>
+              <td>
+                <div style="font-weight:600">Salary — Infosys</div>
+                <div style="font-size:0.72rem;color:var(--muted)">NEFT/SALARY/INFOSYS LTD</div>
+              </td>
+              <td class="amt-pos" style="text-align:right">+₹85,000</td>
+              <td><span class="tc tc-inc">Income</span></td>
+              <td>💼 Salary</td>
+              <td><div class="conf-bar"><div class="bar"><div class="bar-fill" style="width:97%;background:var(--green)"></div></div><span style="font-size:0.7rem;color:var(--green);font-weight:700">97%</span></div></td>
+              <td><span class="src src-builtin">Built-in</span></td>
+            </tr>
+
+            <!-- Flag — AI also unsure -->
+            <tr class="row-flag">
+              <td><input type="checkbox" /></td>
+              <td style="color:var(--muted);white-space:nowrap;font-size:0.78rem">08/01/26</td>
+              <td>
+                <div style="font-weight:600;color:var(--red)">⚠️ Unknown sender</div>
+                <div style="font-size:0.72rem;color:var(--muted)">NEFT/CR/M S ACHARYA/SBI BRANCH</div>
+                <div style="font-size:0.7rem;color:var(--red);margin-top:2px">AI confidence 41% — please confirm type</div>
+              </td>
+              <td class="amt-pos" style="text-align:right">+₹22,000</td>
+              <td>
+                <select style="padding:2px 6px;border-radius:6px;font-size:0.75rem;border:1px solid var(--red);background:var(--red-light);color:var(--red)">
+                  <option>— pick —</option><option>Income</option><option>Transfer</option>
+                </select>
+              </td>
+              <td>
+                <select style="padding:2px 6px;border-radius:6px;font-size:0.75rem;border:1px solid var(--border);max-width:130px">
+                  <option>— pick —</option><option>🏘️ Rental Income</option><option>🏢 Business</option>
+                </select>
+              </td>
+              <td><div class="conf-bar"><div class="bar"><div class="bar-fill" style="width:41%;background:var(--red)"></div></div><span style="font-size:0.7rem;color:var(--red);font-weight:700">41%</span></div></td>
+              <td><span class="src src-flag">⚠️ Review</span></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1rem">
+        <button class="btn btn-outline">← Back</button>
+        <button class="btn btn-primary">✅ Import 43 transactions</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 3: Processing Screen ══════════ -->
+  <div class="tab-panel" id="t-processing">
+    <div class="card" style="max-width:520px;margin:0 auto">
+      <h2 style="margin-bottom:1.25rem">⚙️ Parsing &amp; Classifying…</h2>
+
+      <div class="processing">
+        <div class="spinner"></div>
+        <div class="processing-text">
+          <strong>AI is classifying 14 unknown transactions…</strong>
+          <div class="step-list">
+            <div class="step-done">✓ File parsed — 47 transactions found</div>
+            <div class="step-done">✓ Rules applied — 31 matched</div>
+            <div class="step-done">✓ Income sources checked — 2 matched</div>
+            <div class="step-active">⟳ Sending 14 unknowns to AI…</div>
+            <div class="step-pending">○ Duplicate check</div>
+            <div class="step-pending">○ Building preview</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg);border-radius:8px;padding:0.75rem 1rem;border:1px solid var(--border);font-size:0.8rem;color:var(--muted)">
+        Only transaction descriptions are sent to AI — never amounts, account numbers, or personal details.
+      </div>
+
+      <div style="margin-top:1.25rem">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Overall progress</div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="width:68%;height:100%;background:linear-gradient(90deg,var(--accent),var(--ai));border-radius:4px;transition:width 0.3s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin-top:4px">
+          <span>Step 4 of 6</span><span>~4 seconds remaining</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 4: AI Insights ══════════ -->
+  <div class="tab-panel" id="t-insights">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap">
+        <h2 style="margin:0">✦ AI Insights from this statement</h2>
+        <span class="badge-ai">Generated after import</span>
+      </div>
+
+      <div class="insight-item ii-warn">
+        <div class="insight-icon">📈</div>
+        <div class="insight-msg">
+          <strong>Food spending up 34% vs last month</strong>
+          <p>You spent ₹8,420 on food this month vs ₹6,270 last month. Zomato (₹3,200) and Swiggy (₹2,100) account for most of the increase.</p>
+        </div>
+      </div>
+
+      <div class="insight-item ii-info">
+        <div class="insight-icon">🏪</div>
+        <div class="insight-msg">
+          <strong>3 new merchants detected for the first time</strong>
+          <p>Kavitha Silks (₹8,500), Mallikarjuna Store (₹450), and City Medical (₹1,200) appeared for the first time. Rules created automatically for future imports.</p>
+        </div>
+      </div>
+
+      <div class="insight-item ii-good">
+        <div class="insight-icon">💰</div>
+        <div class="insight-msg">
+          <strong>Two income streams identified</strong>
+          <p>Salary from Infosys (₹85,000) and what appears to be a business payment from Suresh Kumar Trading Co (₹38,000). Total income this statement: ₹1,23,000.</p>
+        </div>
+      </div>
+
+      <div class="insight-item ii-orange">
+        <div class="insight-icon">🔁</div>
+        <div class="insight-msg">
+          <strong>Possible recurring payment without a rule</strong>
+          <p>"HDFC ERGO INSURANCE" appears on the 5th of every month for ₹2,340. Consider creating a recurring expense or import rule for this.</p>
+          <button style="margin-top:6px;padding:3px 10px;font-size:0.75rem;font-weight:700;background:var(--orange-light);color:var(--orange);border:1px solid #fed7aa;border-radius:6px;cursor:pointer">Create rule</button>
+        </div>
+      </div>
+
+      <div class="insight-item ii-ai">
+        <div class="insight-icon">🤖</div>
+        <div class="insight-msg">
+          <strong>AI classified 12 of 14 unknowns with high confidence</strong>
+          <p>2 transactions still need your review. Most common AI category this import: Shopping (4 transactions, mostly local merchants).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 5: Rule Suggestions ══════════ -->
+  <div class="tab-panel" id="t-rules">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap">
+        <h2 style="margin:0">✦ AI-suggested rules</h2>
+        <span class="badge-ai">Based on this import</span>
+      </div>
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1.25rem">
+        AI noticed these patterns across your transactions. Accept a rule to apply it automatically to all future imports — and optionally to existing transactions too.
+      </p>
+
+      <div class="rule-suggest">
+        <div class="rule-suggest-header">
+          <div>
+            <div style="font-weight:700;font-size:0.9rem">Petrol Bunk payments → Fuel</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">Matched 3 transactions this import · ₹6,300 total</div>
+          </div>
+          <div style="display:flex;gap:0.4rem">
+            <button class="accept-btn" onclick="acceptRule(this)">✓ Accept</button>
+            <button class="dismiss-btn">Dismiss</button>
+          </div>
+        </div>
+        <div class="rule-pills">
+          <span class="pill pill-if">description contains "PETROLBUNK"</span>
+          <span style="color:var(--muted);font-size:0.9rem">→</span>
+          <span class="pill pill-then">type = Expense</span>
+          <span class="pill pill-then">category = ⛽ Fuel</span>
+        </div>
+      </div>
+
+      <div class="rule-suggest">
+        <div class="rule-suggest-header">
+          <div>
+            <div style="font-weight:700;font-size:0.9rem">Kavitha Silks → Shopping</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">Matched 1 transaction · ₹8,500</div>
+          </div>
+          <div style="display:flex;gap:0.4rem">
+            <button class="accept-btn" onclick="acceptRule(this)">✓ Accept</button>
+            <button class="dismiss-btn">Dismiss</button>
+          </div>
+        </div>
+        <div class="rule-pills">
+          <span class="pill pill-if">description contains "KAVITHA SILKS"</span>
+          <span style="color:var(--muted);font-size:0.9rem">→</span>
+          <span class="pill pill-then">type = Expense</span>
+          <span class="pill pill-then">category = 🛍️ Shopping</span>
+        </div>
+      </div>
+
+      <div class="rule-suggest">
+        <div class="rule-suggest-header">
+          <div>
+            <div style="font-weight:700;font-size:0.9rem">HDFC ERGO → Insurance (recurring)</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">Seen on same date last 3 months · ₹2,340/month</div>
+          </div>
+          <div style="display:flex;gap:0.4rem">
+            <button class="accept-btn" onclick="acceptRule(this)">✓ Accept</button>
+            <button class="dismiss-btn">Dismiss</button>
+          </div>
+        </div>
+        <div class="rule-pills">
+          <span class="pill pill-if">description contains "HDFC ERGO"</span>
+          <span style="color:var(--muted);font-size:0.9rem">→</span>
+          <span class="pill pill-then">type = Expense</span>
+          <span class="pill pill-then">category = 🛡️ Insurance</span>
+        </div>
+        <div style="margin-top:0.6rem;font-size:0.75rem;color:var(--ai)">✦ AI also suggests adding this as a Recurring Expense at ₹2,340/month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 6: Ask AI ══════════ -->
+  <div class="tab-panel" id="t-chat">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap">
+        <h2 style="margin:0">💬 Ask AI about this import</h2>
+        <span class="badge-ai">Scoped to imported transactions</span>
+      </div>
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:1rem">Ask anything about the transactions in this statement before confirming the import.</p>
+
+      <div class="chat-area" id="chat">
+        <div class="msg ai">
+          <div class="ai-label">✦ AI</div>
+          I've analysed your Canara Bank statement (Jan 2026). It contains <strong>47 transactions</strong> — ₹1,23,000 income and ₹68,420 in expenses. What would you like to know?
+        </div>
+
+        <div class="msg user">What are my top 3 spending categories this month?</div>
+        <div class="msg ai">
+          <div class="ai-label">✦ AI</div>
+          Based on this statement:<br><br>
+          1. 🛍️ <strong>Shopping</strong> — ₹18,200 (Kavitha Silks, Amazon, Myntra)<br>
+          2. 🍔 <strong>Food</strong> — ₹8,420 (Zomato ₹3,200, Swiggy ₹2,100, restaurants)<br>
+          3. ⛽ <strong>Fuel</strong> — ₹6,300 (3 petrol bunk payments)
+        </div>
+
+        <div class="msg user">Is the ₹38,000 from Suresh Kumar income or a loan?</div>
+        <div class="msg ai">
+          <div class="ai-label">✦ AI</div>
+          It's classified as <strong>Business Income</strong> based on "TRADING CO" in the sender name. However, I can't tell for certain whether it's a trade receipt or a personal loan repayment — only you would know that. If it's a loan, you should classify it as <strong>Transfer</strong> so it doesn't inflate your income figures.
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <input type="text" placeholder="Ask about this statement… e.g. 'Show me all transactions above ₹5,000'" />
+        <button>Send</button>
+      </div>
+
+      <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button onclick="addQ(this)" style="padding:4px 10px;font-size:0.75rem;font-weight:600;background:var(--ai-light);color:var(--ai);border:1px solid var(--ai-border);border-radius:999px;cursor:pointer">What's my savings rate?</button>
+        <button onclick="addQ(this)" style="padding:4px 10px;font-size:0.75rem;font-weight:600;background:var(--ai-light);color:var(--ai);border:1px solid var(--ai-border);border-radius:999px;cursor:pointer">Any unusual transactions?</button>
+        <button onclick="addQ(this)" style="padding:4px 10px;font-size:0.75rem;font-weight:600;background:var(--ai-light);color:var(--ai);border:1px solid var(--ai-border);border-radius:999px;cursor:pointer">List all ATM withdrawals</button>
+        <button onclick="addQ(this)" style="padding:4px 10px;font-size:0.75rem;font-weight:600;background:var(--ai-light);color:var(--ai);border:1px solid var(--ai-border);border-radius:999px;cursor:pointer">Which categories are over budget?</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function tab(name) {
+  const map = { flow:'t-flow', preview:'t-preview', processing:'t-processing', insights:'t-insights', rules:'t-rules', chat:'t-chat' }
+  const tabNames = ['flow','preview','processing','insights','rules','chat']
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabNames[i] === name))
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
+  document.getElementById(map[name]).classList.add('active')
+}
+function toggleExplain(id) {
+  const el = document.getElementById(id)
+  el.classList.toggle('show')
+}
+function acceptRule(btn) {
+  const card = btn.closest('.rule-suggest')
+  card.style.opacity = '0.5'
+  btn.textContent = '✓ Saved'
+  btn.disabled = true
+  btn.style.background = 'var(--green)'
+}
+function addQ(btn) {
+  const input = document.querySelector('.chat-input input')
+  input.value = btn.textContent
+  input.focus()
+}
+</script>
+</body>
+</html>

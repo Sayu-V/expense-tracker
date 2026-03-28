@@ -35,6 +35,7 @@ const FEATURES = [
   '😀  Rich emoji category picker',
   '📥  Bank statement import (PDF & CSV)',
   '🏷️  Income sources & auto-classification',
+  '⚙️  Import Rules — smart auto-categorisation',
 ]
 
 const SPLASH_DURATION = 3000  // ms before auto-dismiss
@@ -113,7 +114,7 @@ export default function SplashScreen({ onDismiss }) {
           letterSpacing: '0.5px',
           marginBottom: '1.25rem',
         }}>
-          v2.0.0
+          v2.1.0
         </span>
 
         {/* Feature list — 2 cols on wide, 1 col on narrow */}

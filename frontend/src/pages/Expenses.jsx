@@ -58,6 +58,14 @@ export default function Expenses() {
   const [filterMaxAmount, setFilterMaxAmount] = useState('')
   const [filterType,      setFilterType]      = useState(searchParams.get('type') || '')
 
+  // Sync date filters when the global period selector (week/month/quarter/year) changes,
+  // but don't override explicit URL params from drill-down navigation.
+  useEffect(() => {
+    if (!searchParams.get('date_from')) setFilterDateFrom(period.dateFrom)
+    if (!searchParams.get('date_to'))   setFilterDateTo(period.dateTo)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period.dateFrom, period.dateTo])
+
   // ── Add form ──────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     amount: '', category_id: '', description: '', notes: '',

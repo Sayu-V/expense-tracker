@@ -35,6 +35,7 @@ from app.schemas import (
     ImportConfirmResponse,
 )
 from app.services.categorizer_service import classify_transaction, resolve_category_id
+from app.services.rules_service import apply_rules
 
 
 # ---------------------------------------------------------------------------
@@ -339,48 +340,101 @@ def parse_and_preview(
     # ── Enrich each row ──────────────────────────────────────────────────────
     import_rows: list[ImportTransaction] = []
     for raw in raw_rows:
-        classification = classify_transaction(
-            description=raw["description"],
-            amount=raw["amount"],
-            is_credit=raw["is_credit"],
-            session=db,
-            transaction_date=raw["date"],
-        )
-
-        # Resolve category to DB id
         cat_id, cat_name, cat_emoji = None, None, None
-        income_source_cat_id = classification.pop("_income_source_category_id", None)
+        match_source       = "unknown"
+        matched_rule_id    = None
+        matched_rule_name  = None
+        final_type         = "income" if raw["is_credit"] else "expense"
+        income_subtype     = None
+        is_flagged         = False
+        flag_reason        = None
+        confidence         = "low"
+        description        = raw["description"]
 
-        if income_source_cat_id:
-            cat = db.get(Category, income_source_cat_id)
-            if cat:
-                cat_id, cat_name, cat_emoji = cat.id, cat.name, cat.emoji
-        elif classification.get("category_name"):
-            cat_id, cat_name, cat_emoji = resolve_category_id(
-                classification["category_name"], db
+        # ── Pass 1: User-defined rules (highest priority) ────────────────────
+        rule_result = apply_rules(raw["description"], raw["amount"], raw["is_credit"], db)
+        if rule_result:
+            final_type        = rule_result.get("type") or final_type
+            cat_id            = rule_result.get("category_id")
+            cat_name          = rule_result.get("category_name")
+            confidence        = "high"
+            match_source      = "rule"
+            matched_rule_id   = rule_result.get("matched_rule_id")
+            matched_rule_name = rule_result.get("matched_rule_name")
+            if rule_result.get("rename_to"):
+                description = rule_result["rename_to"]
+            if rule_result.get("skip"):
+                import_rows.append(ImportTransaction(
+                    row_id=str(uuid.uuid4()),
+                    date=raw["date"], description=description,
+                    raw_description=raw["description"], merchant=raw.get("merchant", ""),
+                    amount=raw["amount"], type=final_type, confidence="high",
+                    is_duplicate=False, is_flagged=False, ref_no=raw.get("ref_no", ""),
+                    skip=True, match_source="rule",
+                    matched_rule_id=matched_rule_id, matched_rule_name=matched_rule_name,
+                ))
+                continue
+
+        else:
+            # ── Pass 2 + 3: Income sources + built-in keyword rules ──────────
+            classification = classify_transaction(
+                description=raw["description"],
+                amount=raw["amount"],
+                is_credit=raw["is_credit"],
+                session=db,
+                transaction_date=raw["date"],
             )
+            final_type     = classification["type"]
+            income_subtype = classification.get("income_subtype")
+            confidence     = classification["confidence"]
+            is_flagged     = classification["is_flagged"]
+            flag_reason    = classification.get("flag_reason")
+            match_source   = "income_source" if income_subtype else (
+                "builtin" if confidence in ("high", "medium") else "heuristic"
+            )
+            if is_flagged:
+                match_source = "flagged"
 
-        # Duplicate check
+            income_source_cat_id = classification.pop("_income_source_category_id", None)
+            if income_source_cat_id:
+                cat = db.get(Category, income_source_cat_id)
+                if cat:
+                    cat_id, cat_name, cat_emoji = cat.id, cat.name, cat.emoji
+            elif classification.get("category_name"):
+                cat_id, cat_name, cat_emoji = resolve_category_id(
+                    classification["category_name"], db
+                )
+
+        # Resolve category emoji if not already set
+        if cat_id and not cat_emoji:
+            cat = db.get(Category, cat_id)
+            if cat:
+                cat_emoji = cat.emoji
+
+        # ── Duplicate check ──────────────────────────────────────────────────
         is_dup = _is_duplicate(raw["date"], raw["amount"], raw["description"], db)
 
         import_rows.append(ImportTransaction(
             row_id=str(uuid.uuid4()),
             date=raw["date"],
-            description=raw["description"],
+            description=description,
             raw_description=raw["description"],
             merchant=raw.get("merchant", ""),
             amount=raw["amount"],
-            type=classification["type"],
-            income_subtype=classification.get("income_subtype"),
+            type=final_type,
+            income_subtype=income_subtype,
             suggested_category_id=cat_id,
             suggested_category_name=cat_name,
             suggested_category_emoji=cat_emoji,
-            confidence=classification["confidence"],
+            confidence=confidence,
             is_duplicate=is_dup,
-            is_flagged=classification["is_flagged"],
-            flag_reason=classification.get("flag_reason"),
+            is_flagged=is_flagged,
+            flag_reason=flag_reason,
             ref_no=raw.get("ref_no", ""),
-            skip=is_dup,  # Pre-skip duplicates (user can un-skip)
+            skip=is_dup,
+            match_source=match_source,
+            matched_rule_id=matched_rule_id,
+            matched_rule_name=matched_rule_name,
         ))
 
     # ── Store session ────────────────────────────────────────────────────────

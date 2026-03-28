@@ -184,3 +184,34 @@ class IncomeSource(SQLModel, table=True):
     expected_day: Optional[int] = Field(default=None, ge=1, le=31) # Expected day of month
     category_id: Optional[int] = Field(default=None, foreign_key="categories.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ---------------------------------------------------------------------------
+# v2.1.0 — Import Rules (user-defined classification rules)
+# ---------------------------------------------------------------------------
+
+class ImportRule(SQLModel, table=True):
+    """
+    User-defined IF/THEN rule applied to bank statement rows during import.
+
+    Conditions and actions are stored as JSON strings so the schema stays
+    flexible without requiring a separate junction table.
+
+    condition_logic: 'OR'  → row matches if ANY condition is true
+                    'AND' → row matches if ALL conditions are true
+
+    priority: lower number = checked first (1 = highest, 100 = lowest)
+    """
+    __tablename__ = "import_rules"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=200)
+    priority: int = Field(default=5, ge=1, le=100)
+    is_active: bool = Field(default=True)
+    condition_logic: str = Field(default="OR", max_length=3)   # 'OR' | 'AND'
+    conditions: str = Field(default="[]")                       # JSON list of condition objects
+    actions: str = Field(default="[]")                          # JSON list of action objects
+    match_count: int = Field(default=0)
+    last_matched_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

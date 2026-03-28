@@ -10,6 +10,46 @@ This project uses [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.1.0] — feature/v2.0.0 — 2026-03-28
+
+### Added
+
+**Import Rules Engine (v2.1.0)**
+- New `import_rules` DB table (SQLModel) — stores rule name, priority (1–100), condition logic (AND/OR), conditions JSON, actions JSON, match stats
+- Rules are evaluated as **Pass 1** in the classification waterfall, before income sources and built-in keyword matching
+- **Condition fields**: `description` (contains / not_contains / starts_with), `amount` (gt / lt / gte / lte / eq), `direction` (eq: credit | debit)
+- **Action types**: `set_type`, `set_category`, `rename` (overrides description), `skip` (excludes row from import)
+- AND / OR condition logic per rule — mix multiple conditions with a single toggle
+- **Retroactive apply**: re-classify all existing Expense rows that match a rule (available at rule creation and via "Apply existing" button)
+- **Quick rule / "Save as rule"** — one-click shortcut in the import preview table: click 💾 on any flagged or manually-edited row to instantly create a rule pre-filled with that keyword, type, and category
+- `match_count` and `last_matched_at` tracked per rule for usage stats
+
+**Import Rules API (`/api/v1/import-rules`)**
+- `GET  /import-rules` — list all rules ordered by priority
+- `POST /import-rules` — create rule (optional `apply_retroactive` flag)
+- `PUT  /import-rules/{id}` — update rule (name, priority, active, conditions, actions)
+- `DELETE /import-rules/{id}` — delete rule
+- `POST /import-rules/{id}/retroactive` — re-classify existing transactions; returns `{updated_count, rule_id, rule_name}`
+- `POST /import-rules/quick` — one-click rule creation from import preview table
+
+**Import Rules UI (`/import-rules`)**
+- New `🏷️ Import Rules` page in the sidebar (under Import)
+- Rules list with colour-coded pills: yellow `IF`, purple `AND`/`OR` badge, green `THEN`
+- Full rule builder: add/edit form with condition rows (field / operator / value), action rows, AND/OR logic toggle, retroactive apply checkbox
+- Enable/disable toggle per rule, inline "🔄 Apply existing" retroactive button, Edit/Delete
+
+**Import preview table — Source column (v2.1.0)**
+- New **Source** column in the Review step: shows how each row was classified — 🏷 Rule name (indigo), 📥 Source (green), 🤖 Built-in (grey), 🔍 Heuristic (amber), ⚠️ Review (red)
+- 💾 **Save as rule** button appears on any flagged row or row manually edited by the user — opens a pre-filled quick-rule modal with keyword extracted from description, inheriting the current type and category selection
+- "✓ Rule saved" confirmation replaces the button after a rule is successfully created
+
+### Changed
+- `import_service.py` updated: Pass 1 now runs all active `ImportRule`s (ordered by priority) before the built-in keyword engine
+- Each `ImportTransaction` carries `match_source`, `matched_rule_id`, `matched_rule_name` tracing fields
+- Version bumped to `2.1.0` in FastAPI app, sidebar badge, and splash screen
+
+---
+
 ## [2.0.0] — feature/v2.0.0 — 2026-03-28
 
 ### Added
