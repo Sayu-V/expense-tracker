@@ -1,7 +1,7 @@
 /**
  * pages/FeatureUpdates.jsx
  * -------------------------
- * v2.2.0 — Kanban-style release board showing all app features
+ * v2.3.0 — Kanban-style release board showing all app features
  * organised by category with one-liner descriptions.
  */
 
@@ -65,19 +65,22 @@ const KANBAN = [
     title: 'Design & Tech',
     icon: '🎨',
     color: '#8B5CF6',
-    tag: 'v2.2',
+    tag: 'v2.3',
     tagColor: '#8B5CF6',
     features: [
       { emoji: '🌙', name: 'Light & dark theme',            desc: 'One-click theme toggle — your preference is saved automatically.' },
+      { emoji: '🌌', name: 'Galaxy theme',                  desc: 'Deep-space glass-morphism with animated radial-gradient orbs.' },
       { emoji: '📱', name: 'Mobile-friendly design',        desc: 'Fully responsive layout works great on any screen size.' },
       { emoji: '😀', name: 'Rich emoji category picker',    desc: 'Search and pick from hundreds of emojis to personalise categories.' },
       { emoji: '📶', name: 'PWA offline mode',              desc: 'Install the app and use it without an internet connection.' },
       { emoji: '📄', name: 'Cursor-based pagination',       desc: 'Handles thousands of expense entries without slowing down.' },
+      { emoji: '⚙️', name: 'Settings hub',                  desc: 'Categories, Import, Rules and What\'s New unified under one sidebar entry.' },
     ],
   },
 ]
 
 const VERSION_LOG = [
+  { version: 'v2.3.0', date: 'Mar 2026', summary: 'Settings hub consolidation, Galaxy theme, button system standardisation, .gitattributes Windows safety.' },
   { version: 'v2.2.0', date: 'Mar 2026', summary: 'PWA offline support, cursor pagination, kanban feature board, 3D splash screen.' },
   { version: 'v2.1.0', date: 'Feb 2026', summary: 'Import Rules engine with priority & active toggle, adaptive Spend by Category chart.' },
   { version: 'v2.0.0', date: 'Jan 2026', summary: 'Bank statement import (PDF & CSV), income sources, auto-classification.' },

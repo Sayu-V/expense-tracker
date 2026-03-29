@@ -1,6 +1,6 @@
 /**
  * sw.js — Expense Tracker Service Worker
- * v2.2.0 — PWA offline mode
+ * v2.3.0 — PWA offline mode
  *
  * Strategy:
  *   App shell (HTML, JS, CSS, fonts)  → cache-first  (fast loads, background update)
@@ -9,8 +9,8 @@
  * Cache names are versioned — activate step purges old caches automatically.
  */
 
-const SHELL_CACHE = 'et-shell-v2.2.0'
-const DATA_CACHE  = 'et-data-v2.2.0'
+const SHELL_CACHE = 'et-shell-v2.3.0'
+const DATA_CACHE  = 'et-data-v2.3.0'
 const KEEP_CACHES = [SHELL_CACHE, DATA_CACHE]
 
 // ── Install: pre-cache the app shell entry point ──────────────────────────────

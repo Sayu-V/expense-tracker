@@ -1,7 +1,7 @@
 /**
  * components/SplashScreen.jsx
  * ----------------------------
- * v2.2.0 — Minimal 3D splash: quote · app name · version.
+ * v2.3.0 — Minimal 3D splash: quote · app name · version.
  *
  * Visual effects:
  *   - Deep perspective background with floating orbs
@@ -188,7 +188,7 @@ export default function SplashScreen({ onDismiss }) {
                 letterSpacing: '0.5px',
                 boxShadow: '0 0 12px rgba(99,102,241,0.5)',
               }}>
-                v2.2.0
+                v2.3.0
               </span>
               <span style={{
                 fontSize: '0.65rem',

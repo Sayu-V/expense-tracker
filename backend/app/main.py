@@ -109,7 +109,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="Personal finance tracking with FastAPI, SQLModel, and PostgreSQL",
-    version="2.1.0",
+    version="2.3.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
@@ -173,4 +173,4 @@ app.include_router(rules.router,      prefix="/api/v1")   # v2.1.0
 @app.get("/health", tags=["Health"])
 def health_check():
     """Quick liveness check — Docker healthcheck hits this."""
-    return {"status": "ok", "version": "2.0.0"}
+    return {"status": "ok", "version": "2.3.0"}
