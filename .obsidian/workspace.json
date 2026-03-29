@@ -10,7 +10,7 @@
           {
             "id": "930ce434b57d9d17",
             "type": "tabs",
-            "dimension": 50.22488755622189,
+            "dimension": 77.77777777777779,
             "children": [
               {
                 "id": "29894ba4d7c22572",
@@ -31,7 +31,7 @@
           {
             "id": "0bcead148b95a9a0",
             "type": "tabs",
-            "dimension": 49.77511244377811,
+            "dimension": 22.22222222222222,
             "children": [
               {
                 "id": "382ffd7878e6def5",
@@ -72,7 +72,7 @@
                   },
                   "pinned": true,
                   "icon": "terminal",
-                  "title": "Terminal: ✳ Claude Code"
+                  "title": "Terminal: zsh"
                 }
               }
             ]
@@ -243,9 +243,9 @@
   },
   "active": "29894ba4d7c22572",
   "lastOpenFiles": [
+    "README.md",
     "CLAUDE.md",
     "CHANGELOG.md",
-    "README.md",
     "docs/Architecture.md",
     "docs/ai-import-skill/SKILL.md",
     "frontend/src/pages/Settings.jsx",
