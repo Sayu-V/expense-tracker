@@ -5,7 +5,7 @@ description: >
   Extracts all transactions with date, amount, type (expense/income),
   clean merchant name, and raw description. Handles multi-line cells,
   cross-page row splits, UPI/NEFT/ATM/SWEEPIN/FUNDS TRANSFER patterns,
-  and the MARKREX business-VPA merchant tagging convention.
+  and business-VPA merchant tagging conventions.
   Use when the user uploads or references a Canara Bank statement PDF
   and wants to extract, analyse, or import transaction data.
 license: MIT
@@ -16,17 +16,17 @@ license: MIT
 ## What this skill does
 
 Reads a Canara Bank "Statement of Account" PDF (any number of pages, any date
-range) and returns a clean list of transactions. Tested against:
-- 19-page personal savings account (207 transactions, Apr 2025 – Mar 2026)
-- 86-page business/high-volume savings account (905 transactions, Apr 2025 – Mar 2026)
+range) and returns a clean list of transactions. Handles both small and
+large statements across any period.
 
 ---
 
 ## Statement Format (confirmed)
 
 ### Header info (page 1 only)
-Account number, customer name, branch, IFSC, period dates are in free-text
-above the table. Not parsed by this skill — focus is on the transaction table.
+Account number, customer name, branch, IFSC, and period dates appear in
+free-text above the table. Not parsed by this skill — focus is on the
+transaction table only.
 
 ### Transaction table columns
 | Column | Format | Notes |
@@ -43,7 +43,7 @@ above the table. Not parsed by this skill — focus is on the transaction table.
 ### Special rows to skip
 - `B/F ...` — brought-forward opening balance (first row)
 - Header row (`TRANS DATE`, `VALUE DATE`, ...) — repeats on every page
-- Page 19/86 last page — just `******END OF STATEMENT******` or page number
+- Last page — usually ends with `******END OF STATEMENT******` or page number
 
 ### Cross-page row splits
 Long UPI descriptions sometimes split mid-row across a page boundary.
@@ -57,43 +57,48 @@ The parser appends this to the previous row's description.
 Canara Bank encodes UPI transactions in this format:
 
 ```
-UPI/DR/509255803118/LAXMI S A/CNRB/**LAXMI@OKSBI/UPI//AXIC6A73565D.../02/04/2025 21:47:10
-     ↑              ↑         ↑    ↑                ↑
-     ref_no         merchant  bank  masked_vpa       timestamp
+UPI/DR/100000000001/RAHUL SHARMA/CNRB/**rsharm@oksbi/UPI//TXN123456789.../15/06/2025 10:30:00
+     ↑              ↑             ↑    ↑                ↑
+     ref_no         merchant      bank  masked_vpa       timestamp
 ```
 
 - `DR` = debit = expense; `CR` = credit = income
 - Merchant name = **segment between 3rd and 4th slash**
 
-### MARKREX business VPA pattern
-When the counterparty VPA is a business handle like `MARKREX13`, the merchant
-tag is appended after `@OKICICI/` in the VPA portion:
+### Business VPA pattern
+Some merchants use a shared business VPA handle (e.g. `BIZPAY99`). In these
+cases the actual merchant tag is encoded after the `@OKBANK/` portion of the VPA:
 
 ```
-UPI/DR/509656275661/MARKREX13/CNRB/**X13-1@OKICICI/CABLEGOO/ICI...
+UPI/DR/100000000002/BIZPAY99/CNRB/**BIZPAY99@OKBANK/GROCERY/ICI...
                                                ↑
-                                          merchant tag (CABLEGOO = Cable TV)
+                                          merchant tag (e.g. GROCERY)
 ```
 
-Common MARKREX merchant tags seen in statements:
-- `CABLEGOO` → Cable TV
-- `PETROL` → Petrol/Fuel
-- `MALBARB` → Malabar Gold
-- `PAINTAIN` → Paint shop
-- `PRINTOUT` → Print/xerox shop
-- `BUCHER` / `BUTCHER` → Meat shop
-- `JEWEL` → Jewellery
-- `SILK` → Silk/textile
-- `KIRANA` → Grocery/Kirana
+Example merchant tags you may encounter:
+
+| Tag | Category |
+|-----|----------|
+| `GROCERY` | Grocery / Kirana store |
+| `FUEL` | Petrol / Fuel |
+| `JEWEL` | Jewellery |
+| `TEXTILE` | Textile / Clothing |
+| `MEDICAL` | Medical / Pharmacy |
+| `PRINTOUT` | Print / Xerox shop |
+| `CATERING` | Restaurant / Catering |
+
+> [!note]
+> The exact tag codes vary by business VPA provider. Use the category
+> mapping in `categorizer_service.py` to resolve tags to standard categories.
 
 ### Other description patterns
 | Pattern | Example | Extracted merchant |
 |---|---|---|
-| NEFT | `NEFT CR-BARBX25-BARB0PUMP-BEETECH ENTERPRISES--` | `BEETECH ENTERPRISES` |
-| ATM | `ATM CASH-0652BY01-CANARABANKMANGA...` | `ATM Cash Withdrawal` |
-| SWEEPIN | `SWEEPIN DR - LOCKER RENT/CHARGES 123001594461` | `Bank Sweep / Locker Charges` |
-| CHQ PAID | `CHQ PAID-MICR INWARD CLEARING-SHREE KALIKAMBA VINAYAKA-YES BANK LTD` | `SHREE KALIKAMBA VINAYAKA` |
-| FUNDS TRANSFER | `FUNDS TRANSFER DEBIT - VENKAPPA` | `VENKAPPA` |
+| NEFT | `NEFT CR-BARBX00-BARB0XXXX-ACME ENTERPRISES--` | `ACME ENTERPRISES` |
+| ATM | `ATM CASH-0001BY01-CANARABANK0001...` | `ATM Cash Withdrawal` |
+| SWEEPIN | `SWEEPIN DR - LOCKER RENT/CHARGES 100000000000` | `Bank Sweep / Locker Charges` |
+| CHQ PAID | `CHQ PAID-MICR INWARD CLEARING-PAYEE NAME-BANK LTD` | `PAYEE NAME` |
+| FUNDS TRANSFER | `FUNDS TRANSFER DEBIT - PERSON NAME` | `PERSON NAME` |
 | CASA NEFT | `CASA:NEFT OW:-4 MULTIPLE NEFTS-25042802033570` | `Bulk NEFT (multiple)` |
 
 ---
@@ -126,8 +131,6 @@ Returns list of transaction dicts:
     type:        str  "expense" | "income"
     ref_no:      str  cheque/UPI reference number (empty string if none)
   }
-
-Tested on: 19-page (207 txns) and 86-page (905 txns) Canara Bank statements.
 """
 
 import re
@@ -148,15 +151,14 @@ def _extract_merchant(desc: str) -> str:
     if upi:
         counterparty = upi.group(1).strip()
 
-        # MARKREX business VPA: merchant encoded after @OKICICI/ in the VPA
-        if re.search(r'MARKREX', counterparty, re.I):
-            tag = re.search(
-                r'\*\*X13-\d+@OK[A-Z]+/([A-Z0-9]+)', desc, re.I
-            )
-            if tag:
-                return tag.group(1).strip()
-            # Fallback: use what we have before the first /
-            return counterparty.split('/')[0].strip()
+        # Business VPA pattern: merchant tag encoded after @OKBANK/ in the VPA
+        # Detectable by a short business handle as the counterparty.
+        # Match pattern: **HANDLE@OK<BANK>/<MERCHANT_TAG>/
+        biz_tag = re.search(
+            r'\*\*[^@]+@OK[A-Z]+/([A-Z0-9]+)', desc, re.I
+        )
+        if biz_tag:
+            return biz_tag.group(1).strip()
 
         # Standard UPI: counterparty is the merchant
         return counterparty.split('/')[0].strip()
@@ -446,9 +448,9 @@ txns = parse_canara_statement("statement.pdf")
 
 | Limitation | Impact | Workaround |
 |---|---|---|
-| Scanned/image PDFs | pdfplumber cannot extract tables from scanned images | Download the digital PDF from Canara Net Banking / iMobile |
-| MARKREX merchant tags | Merchant tag is a short code, not full name (e.g. `CABLEGOO` not `Cable TV`) | AI categorisation will map codes to categories correctly |
-| Very long NEFT descriptions | `//SHOULD NOT CREDIT TO A NON KYC//COMPLIANT ACCOUNT` notes may appear in merchant field | Filter or post-process: `if '//' in merchant: merchant = merchant.split('//')[0]` |
+| Scanned/image PDFs | pdfplumber cannot extract tables from scanned images | Download the digital PDF from Canara Net Banking |
+| Business VPA merchant tags | Tag is a short code, not a full name (e.g. `GROCERY` not `Grocery Store`) | AI categorisation will map codes to categories correctly |
+| Very long NEFT descriptions | Compliance notes may appear in merchant field | Filter: `if '//' in merchant: merchant = merchant.split('//')[0]` |
 | Amounts with no decimal | Rare — some older entries may show `1000` not `1,000.00` | `_parse_amount` handles both formats |
 | Multi-statement PDFs | Not tested for merged/combined PDFs | Parse each statement file separately |
 
@@ -458,12 +460,12 @@ txns = parse_canara_statement("statement.pdf")
 
 ```python
 {
-    "date":        "2025-04-03",          # ISO date string
-    "description": "UPI/DR/509255803118/LAXMI S A/CNRB/**LAXMI@OKSBI/...",
-    "merchant":    "LAXMI S A",           # cleaned counterparty name
-    "amount":      1000.0,                # always positive float
-    "type":        "expense",             # "expense" | "income"
-    "ref_no":      "509255803118",        # UPI ref or cheque number, "" if blank
+    "date":        "2025-06-15",           # ISO date string
+    "description": "UPI/DR/100000000001/RAHUL SHARMA/CNRB/**rsharm@oksbi/...",
+    "merchant":    "RAHUL SHARMA",         # cleaned counterparty name
+    "amount":      1000.0,                 # always positive float
+    "type":        "expense",              # "expense" | "income"
+    "ref_no":      "100000000001",         # UPI ref or cheque number, "" if blank
 }
 ```
 
@@ -473,7 +475,7 @@ txns = parse_canara_statement("statement.pdf")
 
 | Statement size | Pages | Transactions | Parse time |
 |---|---|---|---|
-| Small | 19 | 207 | ~2s |
-| Large | 86 | 905 | ~8s |
+| Small | ~20 | ~200 | ~2s |
+| Large | ~90 | ~900 | ~8s |
 
 pdfplumber is CPU-bound. For very large statements (200+ pages), expect 15–30s.
