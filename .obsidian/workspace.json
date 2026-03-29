@@ -10,6 +10,7 @@
           {
             "id": "930ce434b57d9d17",
             "type": "tabs",
+            "dimension": 50.22488755622189,
             "children": [
               {
                 "id": "29894ba4d7c22572",
@@ -17,12 +18,12 @@
                 "state": {
                   "type": "markdown",
                   "state": {
-                    "file": "docs/Walkthrough.md",
+                    "file": "README.md",
                     "mode": "source",
                     "source": false
                   },
                   "icon": "lucide-file",
-                  "title": "Walkthrough"
+                  "title": "README"
                 }
               }
             ]
@@ -30,6 +31,7 @@
           {
             "id": "0bcead148b95a9a0",
             "type": "tabs",
+            "dimension": 49.77511244377811,
             "children": [
               {
                 "id": "382ffd7878e6def5",
@@ -70,7 +72,7 @@
                   },
                   "pinned": true,
                   "icon": "terminal",
-                  "title": "Terminal: zsh"
+                  "title": "Terminal: ✳ Claude Code"
                 }
               }
             ]
@@ -149,7 +151,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/Walkthrough.md",
+                "file": "README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -159,7 +161,7 @@
                 "unlinkedCollapsed": false
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Walkthrough"
+              "title": "Backlinks for README"
             }
           },
           {
@@ -224,7 +226,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -241,26 +243,28 @@
   },
   "active": "29894ba4d7c22572",
   "lastOpenFiles": [
-    "frontend/vite.config.js.timestamp-1774609740823-317cf614cbc94.mjs",
-    "frontend/src/context/PeriodContext.jsx",
-    "frontend/src/context",
-    "docs/Tech_Stack.md",
+    "CLAUDE.md",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/Architecture.md",
+    "docs/ai-import-skill/SKILL.md",
+    "frontend/src/pages/Settings.jsx",
+    "frontend/src/pages/FeatureUpdates.jsx",
+    "frontend/public/manifest.json",
+    "frontend/public/icon.svg",
+    "frontend/public/sw.js",
+    "frontend/public",
     "docs/LLD.md",
+    "backend/app/routers/__pycache__/imports.cpython-310.pyc",
+    "backend/app/services/__pycache__/import_service.cpython-310.pyc",
+    "backend/app/routers/__pycache__/rules.cpython-310.pyc",
+    "backend/app/services/__pycache__/rules_service.cpython-310.pyc",
     "docs/HLD.md",
     "docs/expense_tracker_architecture.svg",
     "docs/expense_request_flow.svg",
-    "docs/Architecture.md",
-    "CLAUDE.md",
-    "backend/pytest-cache-files-yqrg6mvi",
-    "backend/app/services/__pycache__/insights_service.cpython-310.pyc",
-    "backend/app/routers/__pycache__/insights.cpython-310.pyc",
-    "backend/app/services/__pycache__/report_service.cpython-310.pyc",
-    "backend/app/routers/__pycache__/reports.cpython-310.pyc",
-    "backend/app/services/__pycache__/budget_service.cpython-310.pyc",
-    "backend/app/routers/__pycache__/budgets.cpython-310.pyc",
-    "backend/app/routers/__pycache__/categories.cpython-310.pyc",
+    "frontend/src/pages/ImportRules.jsx",
+    "docs/canara-bank-parser-skill/SKILL.md",
     "docs/Walkthrough.md",
-    "CHANGELOG.md",
-    "README.md"
+    "docs/Tech_Stack.md"
   ]
 }
