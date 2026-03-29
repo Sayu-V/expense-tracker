@@ -1,116 +1,103 @@
 # Session Context — Expense Tracker Project
 **Saved:** 2026-03-29
 **Current branch:** `feature/v2.3.0`
+**Remote:** `origin/feature/v2.3.0` ← fully in sync (up to date)
 **Current version:** v2.3.0
 
 ---
 
-## What has been done (this session + prior session)
+## Completed this session (all committed & pushed)
 
-### Code — v2.3.0 features (already committed)
-- `feat(nav)`: Settings hub consolidation — Categories, Import, Import Rules, What's New all under single ⚙️ sidebar entry with `?tab=` URL-driven routing. Legacy routes (`/categories`, `/import`, `/import-rules`, `/features`) redirect via `<Navigate replace>`.
-- `fix(ui)`: Button system standardisation across all pages
-- `fix(galaxy)`: Sidebar fixed positioning + layout gap fix
+### Phase 1 — Documentation overhaul (all in Obsidian Flavored Markdown)
+All markdown files have YAML frontmatter, `[[wikilinks]]`, `> [!type]` callouts, `==highlights==`, Mermaid diagrams.
 
-### Documentation updates (all committed to `feature/v2.3.0`)
-All markdown files rewritten in **Obsidian Flavored Markdown** (YAML frontmatter, `[[wikilinks]]`, `> [!type]` callouts, `==highlights==`, Mermaid diagrams).
+| File | Commit | Status |
+|------|--------|--------|
+| `CHANGELOG.md` | `1f26f83` | ✅ v2.2.0 full + v2.3.0 entries |
+| `README.md` | `094d189` | ✅ Full rewrite, v2.3.0 |
+| `docs/Tech_Stack.md` | `284adf8` | ✅ 11 routers, 8 services |
+| `docs/Architecture.md` | `2a9a718` | ✅ 8 tables, Mermaid, PWA |
+| `docs/HLD.md` | `f3a8a3b` | ✅ Settings hub, all design decisions |
+| `docs/HLD.docx` | `e189aa0` | ✅ Professional Word format |
+| `docs/LLD.md` | `e105d07` | ✅ 8 DB tables, full API contract |
+| `docs/LLD.docx` | `a5441cc` | ✅ Professional Word format |
+| `docs/PRD.docx` | `d7f94e0` | ✅ All features marked ✅ Completed |
+| `docs/Tests.docx` | `4c9db72` | ✅ 12 tests + coverage gap analysis |
+| `docs/Walkthrough.md` | `a351947` | ✅ All 8 pages, 3 themes, Settings hub |
+| `.gitattributes` | `010a8ac` | ✅ `* text=auto eol=lf` |
 
-| File | Status |
-|------|--------|
-| `CHANGELOG.md` | ✅ v2.2.0 full entries + v2.3.0 section |
-| `README.md` | ✅ Full rewrite, v2.3.0, 30+ endpoints |
-| `docs/Tech_Stack.md` | ✅ 11 routers, 8 services, all new libs |
-| `docs/Architecture.md` | ✅ 8 tables, Mermaid diagrams, PWA, import pipeline |
-| `docs/HLD.md` | ✅ 8 pages, 11 routers, 8 services, Settings hub |
-| `docs/HLD.docx` | ✅ Professional Word format |
-| `docs/LLD.md` | ✅ 8 DB tables, full API contract, all service signatures |
-| `docs/LLD.docx` | ✅ Professional Word format |
-| `docs/PRD.docx` | ✅ All features marked ✅ Completed, v2.3.0 |
-| `docs/Tests.docx` | ✅ 12 passing tests + coverage gap analysis |
-| `docs/Walkthrough.md` | ✅ All 8 pages, 3 themes, Import wizard, Settings hub |
-| `.gitattributes` | ✅ `* text=auto eol=lf` Windows CRLF safety |
+### Phase 2 — Version string bumps
+| Location | Was | Now | Commit |
+|----------|-----|-----|--------|
+| `SplashScreen.jsx` header + visible badge | `v2.2.0` | `v2.3.0` | `2cc46b3` |
+| `public/sw.js` cache names | `et-shell/data-v2.2.0` | `v2.3.0` | `2cc46b3` |
+| `frontend/package.json` | `1.0.0` | `2.3.0` | `2cc46b3` |
+| `backend/app/main.py` FastAPI version | `2.1.0` | `2.3.0` | `2cc46b3` |
+| `backend/app/main.py` `/health` endpoint | `2.0.0` | `2.3.0` | `2cc46b3` |
+| `FeatureUpdates.jsx` VERSION_LOG + tag | `v2.2` | `v2.3.0` entry added | `2cc46b3` |
 
-### Version strings updated (all committed)
-| Location | Was | Now |
-|----------|-----|-----|
-| `SplashScreen.jsx` header + visible badge | `v2.2.0` | `v2.3.0` |
-| `public/sw.js` cache names | `et-shell/data-v2.2.0` | `v2.3.0` |
-| `frontend/package.json` | `1.0.0` | `2.3.0` |
-| `backend/app/main.py` FastAPI version | `2.1.0` | `2.3.0` |
-| `backend/app/main.py` `/health` endpoint | `2.0.0` | `2.3.0` |
-| `FeatureUpdates.jsx` VERSION_LOG + tag | `v2.2` | `v2.3.0` entry added |
+### Phase 3 — Privacy fix: canara-bank-parser-skill
+**File:** `docs/canara-bank-parser-skill/SKILL.md`
+**Commit:** `e719092`
+**Status:** ✅ FULLY SANITISED — zero personal data remaining
+
+All personal/private data replaced with generic fictional placeholders:
+
+| Was (personal) | Now (generic) |
+|----------------|---------------|
+| Real UPI ref numbers (`509255803118`, `509656275661`) | `100000000001`, `100000000002` |
+| Real person name `LAXMI S A` | `RAHUL SHARMA` |
+| Real VPA `LAXMI@OKSBI` | `rsharm@oksbi` |
+| `MARKREX13` specific business VPA | `BIZPAY99` generic business handle |
+| `X13-1@OKICICI` specific VPA | `BIZPAY99@OKBANK` |
+| Specific merchant tags (`CABLEGOO`, `MALBARB`, `PAINTAIN`, `BUCHER`, `KIRANA`) | Generic tags (`GROCERY`, `FUEL`, `JEWEL`, `TEXTILE`, `MEDICAL`) |
+| `BEETECH ENTERPRISES` (real NEFT payee) | `ACME ENTERPRISES` |
+| `SHREE KALIKAMBA VINAYAKA` (real CHQ payee) | `PAYEE NAME` |
+| `VENKAPPA` (real person name) | `PERSON NAME` |
+| `CANARABANKMANGA` (location-specific ATM code) | `CANARABANK0001` |
+| "19-page personal savings (207 transactions)" | "~20 pages / ~200 txns" |
+| "86-page business account (905 transactions)" | "~90 pages / ~900 txns" |
+| Description mentions MARKREX as specific business | Rewritten as generic "Business VPA pattern" |
+
+Verification command confirms zero personal data remains:
+```bash
+grep -n "LAXMI\|MARKREX\|509255\|509656\|BEETECH\|KALIKAMBA\|VENKAPPA\|MANGA\|207 trans\|905 trans\|19-page\|86-page\|CABLEGOO\|MALBARB\|PAINTAIN\|BUCHER" docs/canara-bank-parser-skill/SKILL.md
+# Output: CLEAN - none found
+```
 
 ---
 
 ## Current branch state
 
 ```
-branch:  feature/v2.3.0  (local only — not yet pushed to GitHub)
-remote:  origin/feature/v2.3.0  ← DOES NOT EXIST YET
+Branch:   feature/v2.3.0
+Remote:   origin/feature/v2.3.0  ← UP TO DATE (fully pushed)
 
-Last 5 commits:
-  0ba62c1  chore(obsidian): vault UI state update
+Latest commits:
+  1631011  chore(obsidian): update vault state after skill edit
+  e719092  docs(skill): sanitise canara-bank-parser — personal data removed
+  0ba62c1  chore(obsidian): update vault UI state after v2.3.0 doc edits
   2cc46b3  chore(version): bump all strings to v2.3.0
   010a8ac  chore: add .gitattributes
   a351947  docs(walkthrough): Obsidian format + v2.3.0
-  4c9db72  docs(tests): v2.3.0 + coverage gap table
 ```
 
-**To push to GitHub (run from Mac Terminal):**
-```bash
-cd expense-tracker
-git push -u origin feature/v2.3.0
-```
-
-After push: GitHub will show "Compare & pull request" banner.
-Open PR: `feature/v2.3.0` → `main`
+**Working tree:** Clean (only pre-existing untracked `docs/import-rules-mockup.jsx` — intentionally not committed)
 
 ---
 
 ## Branch map
 
 ```
-main                       ← stable
+main                       ← stable, untouched
 feature/v1.1.0  ✅ pushed  ← income tracking, emojis, AI categorise
 feature/v1.8.0  ✅ pushed  ← YoY charts, predictions, insights
 feature/v2.0.0  ✅ pushed  ← bank import, income sources
 feature/v2.2.0  ✅ pushed  ← PWA, galaxy theme, 3D splash, buttons
-feature/v2.3.0  ⏳ local   ← Settings hub, docs overhaul, version bumps
+feature/v2.3.0  ✅ pushed  ← Settings hub, docs overhaul, version bumps, privacy fix
 ```
 
----
-
-## Pending task (in progress when context was saved)
-
-### canara-bank-parser-skill — Privacy fix needed
-
-**Location:** `docs/canara-bank-parser-skill/SKILL.md`
-
-**Problem:** The skill is a standalone reusable skill that will be pushed publicly to GitHub, but the SKILL.md contains personal/private data derived from real bank statements:
-
-| Type of data | Specific issue |
-|---|---|
-| Real UPI reference numbers | `509255803118`, `509656275661` in code examples |
-| Real person name | `LAXMI S A` in UPI example and output schema |
-| Real VPA handles | `LAXMI@OKSBI`, `MARKREX13`, `X13-1@OKICICI` |
-| Business-specific pattern | `MARKREX` is a specific real business VPA tied to user's statements |
-| Real merchant names | `BEETECH ENTERPRISES`, `SHREE KALIKAMBA VINAYAKA`, `VENKAPPA` |
-| Real ATM location code | `ATM CASH-0652BY01-CANARABANKMANGA...` (Mangalore ATM) |
-| Account-specific volumes | "19-page personal savings account (207 transactions)" — reveals real usage |
-| Merchant tag mapping | `CABLEGOO`, `MALBARB`, `PAINTAIN`, `BUCHER`, `KIRANA` etc — reveals the user's actual spending categories and vendors |
-
-**Fix plan:**
-1. Replace all real names/VPAs/refs with clearly fictional placeholders (e.g. `RAHUL SHARMA`, `rahul@oksbi`, `100000000001`)
-2. Generalise the `MARKREX` section — rename it to "Business VPA pattern" with a generic business handle (e.g. `BIZPAY99`)
-3. Replace `BEETECH ENTERPRISES` → `ACME ENTERPRISES`
-4. Replace `SHREE KALIKAMBA VINAYAKA` → `PAYEE NAME`
-5. Replace `VENKAPPA` → `PERSON NAME`
-6. Replace `CANARABANKMANGA` → `CANARABANK0001` (no location hint)
-7. Change "19-page personal savings account (207 transactions)" → "small account sample (N transactions)"
-8. Remove the merchant tag list (`CABLEGOO`, `MALBARB`, etc.) — replace with generic category examples
-9. Remove specific performance numbers tied to real account sizes
-
-**After fix:** Commit with `docs(skill): sanitise canara-bank-parser — remove all personal data`
+**Next step when ready:** Open PR on GitHub → `feature/v2.3.0` into `main`
 
 ---
 
@@ -121,7 +108,7 @@ feature/v2.3.0  ⏳ local   ← Settings hub, docs overhaul, version bumps
 **11 routers:** expenses, categories, budgets, reports, insights, chat, recurring, alerts, goals, imports, import_rules
 **8 services:** expense, budget, report, insights, chat, categorizer, import, import_rules
 **8 DB tables:** categories, expenses, budgets, recurring_expenses, spending_alerts, goals, income_sources, import_rules
-**PWA:** Service Worker v2.3.0 cache names
+**PWA:** Service Worker with `et-shell-v2.3.0` / `et-data-v2.3.0` cache names
 **Obsidian vault:** `.obsidian/` tracked, community plugins: templater-obsidian, terminal
 
 ---
@@ -136,4 +123,4 @@ for f in glob.glob('.git/*.lock'):
     except: pass
 "
 ```
-Run this before BOTH `git add` AND `git commit` in every chained command.
+Run before BOTH `git add` AND `git commit` in every chained command.
