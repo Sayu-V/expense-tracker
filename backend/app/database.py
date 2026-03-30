@@ -8,6 +8,7 @@ Provides:
   - get_session(): FastAPI dependency for injecting DB sessions into routes
 """
 
+from sqlalchemy import text
 from sqlmodel import SQLModel, Session, create_engine
 from app.config import settings
 
@@ -27,8 +28,37 @@ def create_db_and_tables() -> None:
     Creates all tables defined via SQLModel table=True classes.
     Called once in app lifespan startup.
     Safe to call repeatedly — only creates tables that don't exist.
+
+    v1.1.0: Also applies additive ALTER TABLE migrations for new columns
+    on existing databases so a fresh Docker volume isn't required.
+    v1.7.0: Imports new models so SQLModel.metadata includes them.
     """
+    # Import new v1.7.0 models so their tables are registered in metadata
+    from app.models import RecurringExpense, SpendingAlert, Goal  # noqa: F401
     SQLModel.metadata.create_all(engine)
+    _apply_v1_1_0_migrations()
+
+
+def _apply_v1_1_0_migrations() -> None:
+    """
+    Adds new columns introduced in v1.1.0 if they don't already exist.
+    Uses IF NOT EXISTS (PostgreSQL 9.6+) — completely safe to re-run.
+    """
+    migrations = [
+        # v1.1.0 — Add 'type' column to expenses (expense | income)
+        "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS type VARCHAR(10) DEFAULT 'expense' NOT NULL",
+        # v1.1.0 — Add 'emoji' column to categories
+        "ALTER TABLE categories ADD COLUMN IF NOT EXISTS emoji VARCHAR(10) DEFAULT '💰' NOT NULL",
+        # v1.2.0 — Add 'category_type' column to categories (expense | income)
+        "ALTER TABLE categories ADD COLUMN IF NOT EXISTS category_type VARCHAR(10) DEFAULT 'expense' NOT NULL",
+    ]
+    with Session(engine) as session:
+        for sql in migrations:
+            try:
+                session.exec(text(sql))  # type: ignore[arg-type]
+            except Exception:
+                pass  # column already exists or table doesn't exist yet
+        session.commit()
 
 
 def get_session():

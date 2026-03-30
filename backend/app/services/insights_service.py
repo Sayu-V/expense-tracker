@@ -1,10 +1,10 @@
 """
 services/insights_service.py
 -----------------------------
-Rule-based insights engine. Runs 7 detection rules against current
+Rule-based insights engine. Runs 10 detection rules against current
 spending data and returns active insight messages.
 
-Rules (from PRD §4.5):
+Rules (from PRD §4.5 + v1.8.0):
   1. budget_overspend   — actual > budget for any category
   2. burn_rate          — actual > 80% of budget before month end
   3. mom_spike          — this month > last month by 30%+ in a category
@@ -12,6 +12,9 @@ Rules (from PRD §4.5):
   5. unusual_expense    — single expense > 2x the category average
   6. savings_opportunity — consistently under budget (2 months running)
   7. streak             — no expenses added in 3+ days
+  8. daily_rate         — v1.8.0: projected month-end spend from daily burn rate
+  9. savings_rate       — v1.8.0: % of income being saved this month
+ 10. yoy_comparison     — v1.8.0: this month vs same month last year
 """
 
 from calendar import monthrange
@@ -216,6 +219,92 @@ def compute_insights(session: Session) -> list[Insight]:
                         f"Make sure you're up to date!",
                 severity="info",
                 value=float(days_since),
+            ))
+
+    # -----------------------------------------------------------------------
+    # Rule 8: Daily burn rate → projected month-end spend (v1.8.0)
+    # -----------------------------------------------------------------------
+    total_this_month = sum(actuals.values())
+    if total_this_month > 0 and days_elapsed > 0:
+        daily_rate = total_this_month / days_elapsed
+        predicted_total = daily_rate * days_in_month
+        days_left = days_in_month - days_elapsed
+        # Only surface if meaningful days remain and projection is significant
+        if days_left > 0 and predicted_total > total_this_month:
+            insights.append(Insight(
+                type="daily_rate",
+                message=(
+                    f"You're spending ₹{daily_rate:.0f}/day on average. "
+                    f"At this pace you'll spend ₹{predicted_total:.0f} by month end "
+                    f"(₹{total_this_month:.0f} spent so far with {days_left} days left)."
+                ),
+                severity="info",
+                value=round(predicted_total, 2),
+            ))
+
+    # -----------------------------------------------------------------------
+    # Rule 9: Savings rate — % of income saved this month (v1.8.0)
+    # -----------------------------------------------------------------------
+    total_income_this_month = session.exec(
+        select(func.sum(Expense.amount)).where(
+            Expense.date >= start, Expense.date <= end,
+            Expense.type == "income",
+        )
+    ).first() or 0.0
+
+    if total_income_this_month > 0:
+        savings = total_income_this_month - total_this_month
+        savings_rate_pct = (savings / total_income_this_month) * 100
+        if savings_rate_pct >= 20:
+            insights.append(Insight(
+                type="savings_rate",
+                message=(
+                    f"You're saving {savings_rate_pct:.0f}% of your income this month "
+                    f"(₹{savings:.0f} surplus on ₹{total_income_this_month:.0f} income). Keep it up! 🎉"
+                ),
+                severity="info",
+                value=round(savings_rate_pct, 1),
+            ))
+        elif savings_rate_pct < 0:
+            deficit = abs(savings)
+            insights.append(Insight(
+                type="savings_rate",
+                message=(
+                    f"You're spending ₹{deficit:.0f} more than you earned this month "
+                    f"(₹{total_this_month:.0f} out vs ₹{total_income_this_month:.0f} in). "
+                    f"Consider reducing non-essential spend."
+                ),
+                severity="warning",
+                value=round(savings_rate_pct, 1),
+            ))
+
+    # -----------------------------------------------------------------------
+    # Rule 10: Year-over-year comparison for current month (v1.8.0)
+    # -----------------------------------------------------------------------
+    yoy_prev_year = year - 1
+    yoy_start, yoy_end = _month_range(yoy_prev_year, month)
+    yoy_total = session.exec(
+        select(func.sum(Expense.amount)).where(
+            Expense.date >= yoy_start, Expense.date <= yoy_end,
+            Expense.type == "expense",
+        )
+    ).first() or 0.0
+
+    if yoy_total > 0 and total_this_month > 0:
+        yoy_change_pct = ((total_this_month - yoy_total) / yoy_total) * 100
+        month_name = start.strftime("%B")
+        if abs(yoy_change_pct) >= 15:
+            direction = "more" if yoy_change_pct > 0 else "less"
+            sev = "warning" if yoy_change_pct > 0 else "info"
+            insights.append(Insight(
+                type="yoy_comparison",
+                message=(
+                    f"You've spent {abs(yoy_change_pct):.0f}% {direction} in {month_name} this year "
+                    f"vs {month_name} last year "
+                    f"(₹{total_this_month:.0f} vs ₹{yoy_total:.0f})."
+                ),
+                severity=sev,
+                value=round(yoy_change_pct, 1),
             ))
 
     return insights

@@ -1,0 +1,34 @@
+{
+  "name": "Expense Tracker",
+  "short_name": "Expenses",
+  "description": "Track expenses, income and budgets with AI categorisation, smart import rules, and dark mode.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#5E5CE6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Expense",
+      "short_name": "Add",
+      "url": "/expenses",
+      "description": "Quickly add a new expense"
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/",
+      "description": "View spending overview"
+    }
+  ]
+}

@@ -5,6 +5,8 @@ All CRUD routes for expense records.
 Routes:
   POST   /api/v1/expenses
   GET    /api/v1/expenses
+  GET    /api/v1/expenses/suggest-category  (v1.1.0)
+  POST   /api/v1/expenses/bulk-delete       (v1.5.0)
   GET    /api/v1/expenses/{id}
   PUT    /api/v1/expenses/{id}
   DELETE /api/v1/expenses/{id}
@@ -16,14 +18,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.database import get_session
-from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead
+from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseRead, ExpensePage, SuggestCategoryResponse, BulkDeleteRequest
 from app.services.expense_service import (
     create_expense,
     get_expense_by_id,
     list_expenses,
+    list_expenses_page,
     update_expense,
     delete_expense,
 )
+from app.services.categorize_service import suggest_category
 
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
@@ -34,31 +38,68 @@ def create(payload: ExpenseCreate, session: Session = Depends(get_session)):
     return create_expense(session, payload)
 
 
-@router.get("", response_model=list[ExpenseRead])
-def list_all(
-    category_id: Optional[int] = Query(None, description="Filter by category"),
-    date_from: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
-    date_to: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
-    min_amount: Optional[float] = Query(None, description="Minimum amount"),
-    max_amount: Optional[float] = Query(None, description="Maximum amount"),
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
+@router.get("/suggest-category", response_model=SuggestCategoryResponse)
+def suggest_category_endpoint(
+    description: str = Query(..., min_length=1, description="Expense description to categorise"),
+    entry_type: str = Query("expense", description="'expense' or 'income' — selects keyword map"),
     session: Session = Depends(get_session),
 ):
     """
-    List expenses with optional filters.
-    All filters are combinable — e.g. ?category_id=1&date_from=2026-03-01
+    v1.1.0 — AI auto-categorisation via keyword matching.
+    v1.2.0 — entry_type param selects income vs expense keyword map.
     """
-    return list_expenses(
+    category, confidence = suggest_category(session, description, entry_type=entry_type)
+    return SuggestCategoryResponse(
+        description=description,
+        suggested_category_id=category.id if category else None,
+        suggested_category_name=category.name if category else None,
+        suggested_category_emoji=category.emoji if category else None,
+        confidence=confidence,
+    )
+
+
+@router.post("/bulk-delete", status_code=200)
+def bulk_delete(payload: BulkDeleteRequest, session: Session = Depends(get_session)):
+    """v1.5.0 — Delete multiple expense records by ID list."""
+    deleted = 0
+    for eid in payload.ids:
+        if delete_expense(session, eid):
+            deleted += 1
+    return {"deleted": deleted}
+
+
+@router.get("", response_model=ExpensePage)
+def list_all(
+    category_id: Optional[int]   = Query(None, description="Filter by category"),
+    date_from:   Optional[date]   = Query(None, description="Start date (YYYY-MM-DD)"),
+    date_to:     Optional[date]   = Query(None, description="End date (YYYY-MM-DD)"),
+    min_amount:  Optional[float]  = Query(None, description="Minimum amount filter"),
+    max_amount:  Optional[float]  = Query(None, description="Maximum amount filter"),
+    type:        Optional[str]    = Query(None, description="Filter by type: 'expense' or 'income'"),
+    page_size:   int              = Query(50, ge=1, le=200, description="Items per page (max 200)"),
+    cursor:      Optional[str]    = Query(None, description="Opaque cursor from previous page's next_cursor"),
+    session:     Session          = Depends(get_session),
+):
+    """
+    v2.2.0 — Cursor-based paginated expense list.
+
+    First page: omit `cursor`. Subsequent pages: pass `next_cursor` from the
+    previous response as `cursor`.  All filters are preserved across pages.
+
+    Returns ExpensePage:  { items, next_cursor, has_more, total }
+    """
+    items, next_cursor, has_more, total = list_expenses_page(
         session,
         category_id=category_id,
         date_from=date_from,
         date_to=date_to,
         min_amount=min_amount,
         max_amount=max_amount,
-        limit=limit,
-        offset=offset,
+        type=type,
+        page_size=page_size,
+        cursor=cursor,
     )
+    return ExpensePage(items=items, next_cursor=next_cursor, has_more=has_more, total=total)
 
 
 @router.get("/{expense_id}", response_model=ExpenseRead)

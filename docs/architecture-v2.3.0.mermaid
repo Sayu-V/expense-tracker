@@ -1,0 +1,137 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#4F46E5",
+    "primaryTextColor": "#ffffff",
+    "primaryBorderColor": "#3730A3",
+    "lineColor": "#6B7280",
+    "secondaryColor": "#EEF2FF",
+    "tertiaryColor": "#F9FAFB",
+    "background": "#ffffff",
+    "fontSize": "14px"
+  }
+}}%%
+
+flowchart TB
+
+  %% ── USER ─────────────────────────────────────────────────────────────────
+  USER(["👤 User  ·  Browser / PWA (installable)"])
+
+  %% ── FRONTEND ─────────────────────────────────────────────────────────────
+  subgraph FE["🖥️  Frontend — React 18 + Vite 5 + React Router v6"]
+    direction TB
+
+    subgraph Pages["12 Pages"]
+      direction LR
+      P1["📊 Dashboard\nSummary · Trend · YoY\nPrediction · Insights"]
+      P2["💸 Expenses\nCRUD · Bulk Delete\nCSV Export · Pagination"]
+      P3["🎯 Budgets\nLimits · Progress Bars\nPeriod Filter"]
+      P4["💬 Chat\nOffline NLP Q&A\nInline Recharts"]
+      P5["🔄 Recurring\nTemplates · Auto-Generate"]
+      P6["🔔 Alerts\nThreshold · Spike · Unread Badge"]
+      P7["🏆 Goals\nSVG Progress Ring · Deadline"]
+      P8["📥 Import\nPDF/CSV · Preview Table\nCategory Edit · Confirm"]
+      P9["📋 Import Rules\nIF/THEN · AND/OR Logic\nRetroactive Apply"]
+      P10["⚙️ Settings Hub (v2.3)\nCategories · Import\nImport Rules · What's New\nURL-driven tabs"]
+    end
+
+    subgraph FEInfra["Infrastructure"]
+      direction LR
+      CTX["PeriodContext\nWeek/Month/Quarter/Year\nShared across all pages"]
+      SW["🌐 Service Worker\nPWA Offline · Cache-First Shell\nNetwork-First API"]
+      THEME["3 Themes\n☀️ Light  🌙 Dark  🌌 Galaxy 3D\nGlass-morphism · Animated orbs"]
+      SPLASH["3D SplashScreen\nGlass-morphism\nRotating finance quotes"]
+    end
+  end
+
+  %% ── VERSION TIMELINE ─────────────────────────────────────────────────────
+  subgraph VER["📋  Version Timeline"]
+    direction LR
+    V1["v1.0\nCore CRUD\nExpenses + Categories\nDocker setup"]
+    V2["v1.1 – v1.4\nIncome type\nPeriod filter\nMobile UI\nAuto-refresh"]
+    V3["v1.5 – v1.9\nChat AI (offline)\nBulk ops · CSV export\nDark mode · Sidebar\nRecurring · Alerts · Goals\nRich emoji picker (120+)"]
+    V4["v2.0\nBank Import\nCanara PDF + generic CSV\nIncome Sources\n2-pass auto-categorise"]
+    V5["v2.1\nImport Rules engine\nIF/THEN · AND/OR\nRetroactive apply\nQuick-rule from preview"]
+    V6["v2.2\nPWA full offline\nGalaxy 3D theme\nCursor pagination\n3D splash screen\nButton standardisation"]
+    V7["v2.3\nSettings hub\nSidebar 11→8 items\n.gitattributes\nURL-driven tabs"]
+
+    V1 --> V2 --> V3 --> V4 --> V5 --> V6 --> V7
+  end
+
+  %% ── BACKEND ──────────────────────────────────────────────────────────────
+  subgraph BE["⚡  Backend — FastAPI 0.111 + SQLModel 0.0.18 + Pydantic v2 + Uvicorn"]
+    direction TB
+
+    subgraph Routers["11 API Routers  (prefix: /api/v1)"]
+      direction LR
+      R1["/expenses\nCRUD · bulk-delete\ncursor pagination · CSV export\nauto-categorise on create"]
+      R2["/categories\nCRUD · defaults seeding"]
+      R3["/budgets\nCRUD · status · % used\nbulk-delete"]
+      R4["/reports\nmonthly-summary · by-category\ntrend · year-over-year\nprediction · top-expenses"]
+      R5["/insights\n10 rule-based insight checks"]
+      R6["/chat\nOffline NLP Q&A\nInline chart generation"]
+      R7["/recurring-expenses\nCRUD · generate-one\ngenerate-all-due"]
+      R8["/alerts\ngenerate · mark-read\nbulk-read · unread count"]
+      R9["/goals\nCRUD · progress tracking"]
+      R10["/imports\nPDF/CSV upload · session store\nconfirm · income-sources CRUD"]
+      R11["/import-rules\nCRUD · retroactive apply\nquick-rule from preview"]
+    end
+
+    subgraph Services["8 Services"]
+      direction LR
+      S1["expense_service\nFilters · pagination cursor\nauto-categorise hook"]
+      S2["budget_service\nStatus computation\n% spent per category"]
+      S3["report_service\nMonthly summary · Trend\nYoY · Prediction · Top-N"]
+      S4["insights_service\n10 rules:\nbudget overspend · burn rate\nMoM spike · top category\nunusual · savings opportunity\nstreak · daily rate\nsavings rate · YoY comparison"]
+      S5["chat_service\nKeyword NLP (offline)\nQuery routing · Chart gen"]
+      S6["categorizer_service\n2-pass auto-categorise:\n1. Import Rules engine\n2. Income source keywords\n3. Built-in keyword map\nFallback → Uncategorized"]
+      S7["import_service\nCanara Bank PDF parser\nGeneric CSV fallback\nSession store · Dedup"]
+      S8["import_rules_service\nIF/THEN condition eval\nRetroactive re-classify"]
+    end
+
+    Routers --> Services
+  end
+
+  %% ── DATABASE ─────────────────────────────────────────────────────────────
+  subgraph DB["🗄️  PostgreSQL 15  (Docker volume: postgres_data)"]
+    direction LR
+    T1["expenses\namount · date · description\nnotes · type · category_id"]
+    T2["categories\nname · emoji · color\ncategory_type · is_default"]
+    T3["budgets\namount · month · year\ncategory_id"]
+    T4["recurring_expenses\nfrequency · next_date\nis_active · category_id"]
+    T5["spending_alerts\ntype · severity · message\nis_read · month · year"]
+    T6["goals\nname · target_amount\ncurrent_amount · deadline\nis_completed"]
+    T7["income_sources  (v2.0)\nname · keyword\nmatch_type · category_id"]
+    T8["import_rules  (v2.1)\nconditions · action\npriority · is_active"]
+  end
+
+  %% ── DOCKER ───────────────────────────────────────────────────────────────
+  subgraph Docker["🐳  Docker Compose 3.9  —  Strategy A: single docker compose up --build"]
+    direction LR
+    DC1["backend :8000\nFastAPI + Uvicorn\nALTER TABLE migrations on startup"]
+    DC2["frontend :5173\nVite dev server\nHMR enabled"]
+    DC3["db :5432\nPostgreSQL 15\nVolume: postgres_data"]
+    DC1 <-->|"SQLModel / psycopg2"| DC3
+  end
+
+  %% ── CONNECTIONS ──────────────────────────────────────────────────────────
+  USER -->|"HTTPS · PWA install"| FE
+  FE -->|"Axios REST · JSON"| BE
+  BE -->|"SQLModel ORM · SQL"| DB
+
+  %% ── STYLES ───────────────────────────────────────────────────────────────
+  classDef page     fill:#4F46E5,stroke:#3730A3,color:#fff,rx:6
+  classDef infra    fill:#0891B2,stroke:#0E7490,color:#fff,rx:6
+  classDef router   fill:#0369A1,stroke:#075985,color:#fff,rx:6
+  classDef service  fill:#059669,stroke:#047857,color:#fff,rx:6
+  classDef db       fill:#D97706,stroke:#B45309,color:#fff,rx:6
+  classDef ver      fill:#7C3AED,stroke:#6D28D9,color:#fff,rx:4
+  classDef docker   fill:#1D4ED8,stroke:#1E40AF,color:#fff,rx:6
+
+  class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10 page
+  class CTX,SW,THEME,SPLASH infra
+  class R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11 router
+  class S1,S2,S3,S4,S5,S6,S7,S8 service
+  class T1,T2,T3,T4,T5,T6,T7,T8 db
+  class V1,V2,V3,V4,V5,V6,V7 ver
+  class DC1,DC2,DC3 docker

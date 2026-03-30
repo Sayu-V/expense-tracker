@@ -11,15 +11,21 @@ On startup:
 CORS is configured from .env so the React dev server can talk to the API.
 """
 
+import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 
+logger = logging.getLogger(__name__)
+
 from app.config import settings
 from app.database import create_db_and_tables, engine
-from app.models import Category
-from app.routers import expenses, categories, budgets, reports, insights
+from app.models import Category, IncomeSource, ImportRule  # noqa: F401 — ensures SQLModel creates all tables
+from app.routers import expenses, categories, budgets, reports, insights, chat, recurring, alerts, goals, imports, rules
 
 
 # ---------------------------------------------------------------------------
@@ -27,13 +33,34 @@ from app.routers import expenses, categories, budgets, reports, insights
 # ---------------------------------------------------------------------------
 
 DEFAULT_CATEGORIES = [
-    {"name": "Food",           "color": "#f97316", "is_default": True},
-    {"name": "Transport",      "color": "#3b82f6", "is_default": True},
-    {"name": "Housing",        "color": "#8b5cf6", "is_default": True},
-    {"name": "Health",         "color": "#10b981", "is_default": True},
-    {"name": "Entertainment",  "color": "#ec4899", "is_default": True},
-    {"name": "Shopping",       "color": "#f59e0b", "is_default": True},
-    {"name": "Other",          "color": "#6b7280", "is_default": True},
+    # ── Expense categories ────────────────────────────────────────────────
+    {"name": "Food",           "color": "#f97316", "emoji": "🍔", "category_type": "expense", "is_default": True},
+    {"name": "Transport",      "color": "#3b82f6", "emoji": "🚗", "category_type": "expense", "is_default": True},
+    {"name": "Housing",        "color": "#8b5cf6", "emoji": "🏠", "category_type": "expense", "is_default": True},
+    {"name": "Health",         "color": "#10b981", "emoji": "💊", "category_type": "expense", "is_default": True},
+    {"name": "Entertainment",  "color": "#ec4899", "emoji": "🎬", "category_type": "expense", "is_default": True},
+    {"name": "Shopping",       "color": "#f59e0b", "emoji": "🛒", "category_type": "expense", "is_default": True},
+    {"name": "Other",          "color": "#6b7280", "emoji": "📦", "category_type": "expense", "is_default": True},
+    # ── Income categories (v1.2.0) ────────────────────────────────────────
+    {"name": "Salary",         "color": "#059669", "emoji": "💼", "category_type": "income", "is_default": True},
+    {"name": "Pocket Money",   "color": "#0891b2", "emoji": "👛", "category_type": "income", "is_default": True},
+    {"name": "Freelance",      "color": "#7c3aed", "emoji": "💻", "category_type": "income", "is_default": True},
+    {"name": "Side Hustle",    "color": "#db2777", "emoji": "🚀", "category_type": "income", "is_default": True},
+    {"name": "Stocks",         "color": "#16a34a", "emoji": "📊", "category_type": "income", "is_default": True},
+    {"name": "Dividend",       "color": "#ca8a04", "emoji": "📈", "category_type": "income", "is_default": True},
+    {"name": "Gift",           "color": "#dc2626", "emoji": "🎁", "category_type": "income", "is_default": True},
+    {"name": "Rental Income",  "color": "#9333ea", "emoji": "🏘️", "category_type": "income", "is_default": True},
+    # ── v2.0.0 additions ──────────────────────────────────────────────────────
+    {"name": "Business Income","color": "#0d9488", "emoji": "🏢", "category_type": "income", "is_default": True},
+    {"name": "Interest Income","color": "#d97706", "emoji": "🏦", "category_type": "income", "is_default": True},
+    {"name": "Refund",         "color": "#0ea5e9", "emoji": "↩️", "category_type": "income", "is_default": True},
+    {"name": "Bank Charges",   "color": "#ef4444", "emoji": "🏧", "category_type": "expense","is_default": True},
+    {"name": "Fuel",           "color": "#f59e0b", "emoji": "⛽", "category_type": "expense","is_default": True},
+    {"name": "Insurance",      "color": "#8b5cf6", "emoji": "🛡️", "category_type": "expense","is_default": True},
+    {"name": "Education",      "color": "#2563eb", "emoji": "📚", "category_type": "expense","is_default": True},
+    {"name": "Utilities",      "color": "#64748b", "emoji": "💡", "category_type": "expense","is_default": True},
+    {"name": "Cash Withdrawal","color": "#78716c", "emoji": "💵", "category_type": "expense","is_default": True},
+    {"name": "Investments",    "color": "#16a34a", "emoji": "📈", "category_type": "expense","is_default": True},
 ]
 
 
@@ -41,6 +68,7 @@ def seed_default_categories() -> None:
     """
     Inserts default categories if they don't already exist.
     Idempotent — safe to call on every startup.
+    v1.1.0: Also updates emoji on existing rows that still have the default '💰'.
     """
     with Session(engine) as session:
         for cat_data in DEFAULT_CATEGORIES:
@@ -50,6 +78,14 @@ def seed_default_categories() -> None:
             if not existing:
                 category = Category(**cat_data)
                 session.add(category)
+            else:
+                # Back-fill emoji for rows created before v1.1.0
+                if existing.emoji == "💰":
+                    existing.emoji = cat_data["emoji"]
+                # Back-fill category_type for rows created before v1.2.0
+                if existing.category_type == "expense" and cat_data.get("category_type") == "income":
+                    existing.category_type = "income"
+                session.add(existing)
         session.commit()
 
 
@@ -73,11 +109,31 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Expense Tracker API",
     description="Personal finance tracking with FastAPI, SQLModel, and PostgreSQL",
-    version="1.0.0",
+    version="2.3.0",
     docs_url="/docs",       # Swagger UI
     redoc_url="/redoc",     # ReDoc
     lifespan=lifespan,
 )
+
+
+# ---------------------------------------------------------------------------
+# Validation error handler — logs the full Pydantic v2 detail to stdout
+# so 422 errors are visible in Docker logs (docker compose logs backend)
+# ---------------------------------------------------------------------------
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # exc.errors() may contain non-serialisable objects (e.g. ValueError in ctx).
+    # jsonable_encoder converts them to strings so JSONResponse can serialise them.
+    errors = jsonable_encoder(exc.errors())
+    logger.error(
+        "422 Validation Error  %s %s\n  body: %s\n  errors: %s",
+        request.method,
+        request.url.path,
+        exc.body,
+        errors,
+    )
+    return JSONResponse(status_code=422, content={"detail": errors})
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +158,12 @@ app.include_router(categories.router, prefix="/api/v1")
 app.include_router(budgets.router,    prefix="/api/v1")
 app.include_router(reports.router,    prefix="/api/v1")
 app.include_router(insights.router,   prefix="/api/v1")
+app.include_router(chat.router,       prefix="/api/v1")   # v1.5.0
+app.include_router(recurring.router,  prefix="/api/v1")   # v1.7.0
+app.include_router(alerts.router,     prefix="/api/v1")   # v1.7.0
+app.include_router(goals.router,      prefix="/api/v1")   # v1.7.0
+app.include_router(imports.router,    prefix="/api/v1")   # v2.0.0
+app.include_router(rules.router,      prefix="/api/v1")   # v2.1.0
 
 
 # ---------------------------------------------------------------------------
@@ -111,4 +173,4 @@ app.include_router(insights.router,   prefix="/api/v1")
 @app.get("/health", tags=["Health"])
 def health_check():
     """Quick liveness check — Docker healthcheck hits this."""
-    return {"status": "ok", "version": "1.0.0"}
+    return {"status": "ok", "version": "2.3.0"}

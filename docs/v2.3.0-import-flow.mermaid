@@ -1,0 +1,128 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#4F46E5",
+    "primaryTextColor": "#ffffff",
+    "primaryBorderColor": "#3730A3",
+    "lineColor": "#6B7280",
+    "secondaryColor": "#EEF2FF",
+    "tertiaryColor": "#F0FDF4",
+    "background": "#ffffff",
+    "fontSize": "14px"
+  }
+}}%%
+
+flowchart TD
+
+  %% ── ENTRY ────────────────────────────────────────────────────────────────
+  START(["👤 User visits Import Page"])
+  START --> UPLOAD
+
+  UPLOAD["📂 Drag-and-drop  or  Click to Upload\nCanara Bank PDF  or  generic CSV\nMax file size: 20 MB"]
+  UPLOAD --> FILETYPE
+
+  %% ── FILE TYPE ────────────────────────────────────────────────────────────
+  FILETYPE{{"❓ File type?"}}
+  FILETYPE -->|".pdf"| PDF_EXTRACT
+  FILETYPE -->|".csv"| CSV_PARSE
+
+  %% ── PDF PATH ─────────────────────────────────────────────────────────────
+  PDF_EXTRACT["📄 pdfplumber\nExtract tables across all pages\nHandles multi-page statements\nPreserves column structure"]
+
+  PDF_EXTRACT --> PDF_OK{{"Tables found\nin PDF?"}}
+  PDF_OK -->|"No — scanned / image PDF"| PDF_ERR
+  PDF_OK -->|"Yes"| CANARA_PARSE
+
+  PDF_ERR["⚠️ Error returned to user:\nScanned PDF detected — text not extractable.\nPlease download the statement as CSV or\ndigital PDF from your bank's net banking portal."]
+  PDF_ERR --> UPLOAD
+
+  CANARA_PARSE["🏦 Canara Bank PDF Parser\n─────────────────────────────────\nDate formats: DD-MMM-YY  ·  DD/MM/YYYY\nDebit   ←  Withdrawal Amount column\nCredit  ←  Deposit Amount column\nDesc    ←  Narration / Particulars field\n─────────────────────────────────\nPattern matching:\n  UPI/P2P  ·  NEFT/RTGS  ·  ATM WDL\n  Business VPA tagging\n  Cross-page split-row stitching\n  Skip: opening/closing balance rows\n  Skip: zero-amount rows"]
+
+  CANARA_PARSE --> NORMALISE
+
+  %% ── CSV PATH ─────────────────────────────────────────────────────────────
+  CSV_PARSE["🔍 Generic CSV Parser\nRead raw rows via Python csv module\nFuzzy-match column names:\n  date  ·  amount  ·  description\nFlags ambiguous or unrecognised columns\nfor user review in preview table"]
+  CSV_PARSE --> NORMALISE
+
+  %% ── NORMALISE ────────────────────────────────────────────────────────────
+  NORMALISE["✅ Normalised Transaction Rows\nUniform shape: date · description · amount · type\nSkip: zero-amount rows\nSkip: duplicate reference rows\nSkip: opening / closing balance rows\nType assignment: debit → expense  ·  credit → income"]
+
+  %% ── 2-PASS AUTO-CATEGORISATION ───────────────────────────────────────────
+  NORMALISE --> PASS1A
+
+  subgraph CAT["🤖  2-Pass Auto-Categorisation  (categorizer_service)"]
+    direction TB
+
+    PASS1A["Pass 1A  —  Import Rules Engine\nUser-defined IF / THEN rules  (highest priority)\nConditions:  description contains  ·  amount gt/lt  ·  type is\nLogic:        AND / OR combinations\nAction:       assign category + type\nRuns first — overrides all subsequent passes"]
+
+    PASS1B["Pass 1B  —  Income Sources\nUser-defined sender keyword list\nExample:  'HUVALON' → Income / Salary\n          'RENT RECEIVED' → Income / Rental\nMatches description substring (case-insensitive)\nAssigns type=income + linked category"]
+
+    PASS2["Pass 2  —  Built-in Keyword Map\n50+ keyword patterns (offline, no API call)\nSwiggy / Zomato       → Food & Dining\nUber / Ola / Rapido   → Transport\nAmazon / Flipkart     → Shopping\nNetflix / Spotify     → Entertainment\nPharmacy / Hospital   → Health\nElectricity / Jio     → Bills & Utilities\n…and more"]
+
+    FALLBACK["Fallback  —  Uncategorized\nFlagged with ⚠️ in preview table\nUser must assign category manually\nbefore confirming import"]
+
+    PASS1A -->|"No rule matched"| PASS1B
+    PASS1B -->|"No income source matched"| PASS2
+    PASS2  -->|"No keyword matched"| FALLBACK
+  end
+
+  PASS1A -->|"Rule matched ✓"| PREVIEW_BUILD
+  PASS1B -->|"Income source matched ✓"| PREVIEW_BUILD
+  PASS2  -->|"Keyword matched ✓"| PREVIEW_BUILD
+  FALLBACK --> PREVIEW_BUILD
+
+  %% ── PREVIEW ──────────────────────────────────────────────────────────────
+  PREVIEW_BUILD["📋 Build ImportPreview Response\n{ bank, format, total_rows, rows[ ] }"]
+  PREVIEW_BUILD --> PREVIEW_UI
+
+  PREVIEW_UI["🖥️  Preview Table  (editable before import)\n┌─────────────────────────────────────────────────────┐\n│ ☑  Date        Description         Amount   Category  │\n│ ☑  28-Mar-26   UPI/SWIGGY ORDER    ₹ 450    🍔 Food   │\n│ ☑  27-Mar-26   UPI/UBER TRIP       ₹ 180    🚗 Travel │\n│ ☑  26-Mar-26   HUVALON SALARY      ₹55000   💼 Salary │\n│ ⚠️  25-Mar-26   NEFT CR 123456      ₹12000   (review)  │\n│ ☐  24-Mar-26   Opening Balance     —        (skip)    │\n└─────────────────────────────────────────────────────┘\nUser can:  ✏️ change category  ·  ☐ deselect row to skip\n⚠️ Large unclassified deposits flagged automatically"]
+
+  PREVIEW_UI --> USER_ACTION
+
+  USER_ACTION{{"👤 User action?"}}
+  USER_ACTION -->|"Edit a category"| EDIT_CAT
+  USER_ACTION -->|"Deselect row"| PREVIEW_UI
+  USER_ACTION -->|"Click Confirm Import"| CONFIRM
+
+  EDIT_CAT["✏️ Category dropdown\nShows all user categories\nChange takes effect immediately in table"]
+  EDIT_CAT --> PREVIEW_UI
+
+  %% ── CONFIRM ──────────────────────────────────────────────────────────────
+  CONFIRM["POST /api/v1/import/confirm\n{ rows: selected rows with final category_ids }"]
+  CONFIRM --> DEDUP
+
+  DEDUP["🔍 Duplicate Detection\nFor each row: check if same\ndate + amount + description\nalready exists in expenses table\nDuplicates → skipped (not errored)"]
+
+  DEDUP --> BULK_INSERT
+
+  BULK_INSERT["⚡ Bulk INSERT\nOne expense record per selected, non-duplicate row\nReturns: { imported: N, skipped: M, errors: [ ] }"]
+  BULK_INSERT --> RESULT
+
+  %% ── RESULT ───────────────────────────────────────────────────────────────
+  RESULT{{"Import result?"}}
+  RESULT -->|"All success"| SUCCESS
+  RESULT -->|"Partial (duplicates skipped)"| PARTIAL
+
+  SUCCESS(["✅ Import Complete!\nN expenses imported\nRedirecting to Expenses page…"])
+
+  PARTIAL["⚠️ Partial Import\nN imported  ·  M skipped (duplicates)\nError details shown to user\nUser can review skipped rows"]
+  PARTIAL --> DONE(["✅ Done"])
+
+  %% ── STYLES ───────────────────────────────────────────────────────────────
+  classDef userNode   fill:#4F46E5,stroke:#3730A3,color:#fff
+  classDef decision   fill:#D97706,stroke:#B45309,color:#fff
+  classDef parser     fill:#059669,stroke:#047857,color:#fff
+  classDef catStep    fill:#7C3AED,stroke:#6D28D9,color:#fff
+  classDef ui         fill:#0891B2,stroke:#0E7490,color:#fff
+  classDef success    fill:#16A34A,stroke:#15803D,color:#fff
+  classDef error      fill:#DC2626,stroke:#B91C1C,color:#fff
+  classDef neutral    fill:#6B7280,stroke:#4B5563,color:#fff
+
+  class START,UPLOAD userNode
+  class FILETYPE,PDF_OK,USER_ACTION,RESULT decision
+  class CANARA_PARSE,CSV_PARSE parser
+  class PASS1A,PASS1B,PASS2,FALLBACK catStep
+  class PDF_EXTRACT,NORMALISE,PREVIEW_BUILD,PREVIEW_UI,EDIT_CAT ui
+  class SUCCESS,DONE success
+  class PDF_ERR error
+  class CONFIRM,DEDUP,BULK_INSERT,PARTIAL neutral
