@@ -39,7 +39,7 @@ See also: [[README]] · [[CHANGELOG]] · [[docs/SESSION_CONTEXT]]
 | # | File | Format | Purpose |
 |---|---|---|---|
 | 01 | [[docs/01_PRD\|PRD]] | .docx | Product Requirements — all features marked ✅ |
-| 02 | [[docs/02_Project_Proposal\|Project Proposal]] | .docx | IBM student project proposal |
+| 02 | [[docs/02_Project_Proposal\|Project Proposal]] | .docx | Huvalon internship capstone — project proposal |
 | 03 | [[docs/03_Architecture\|Architecture]] | .md | 3-tier Docker architecture, 8 DB tables, data flow |
 | 04 | [[docs/04_Tech_Stack\|Tech Stack]] | .md | Every library with rationale |
 | 05 | [[docs/05_HLD\|HLD]] | .md + .docx | High-Level Design, all design decisions |

@@ -19,16 +19,15 @@ related:
   - "[[docs/06_LLD]]"
   - "[[docs/10_Walkthrough]]"
   - "[[docs/12_Final_Report]]"
-  - "[[docs/canara-bank-parser-skill/SKILL]]"
-  - "[[docs/ai-import-skill/SKILL]]"
-  - "[[docs/SESSION_CONTEXT]]"
 ---
 
 # 💰 Expense Tracker
 
 > Full-stack personal finance management system built with FastAPI, React, and PostgreSQL.
 
-**IBM Student Project | Yenepoya University | 2023–2026 Batch**
+**Huvalon Consultancy Internship Project · Data Analysis & Automation**
+**Yenepoya University · BCA Final Year (2023–2026) | Intern: Sayooj Vandichal**
+**Duration: 09 Mar 2026 – 08 May 2026 · Hybrid, Mangalore**
 **Current version: ==v2.3.0==** · Branch: `feature/v2.3.0`
 
 See also: [[CHANGELOG]] · [[docs/03_Architecture]] · [[docs/04_Tech_Stack]] · [[docs/10_Walkthrough]] · [[docs/12_Final_Report]]
@@ -341,7 +340,7 @@ ALLOWED_ORIGINS=http://localhost:5173
 
 ## Planned Features (v3.x)
 
-The following features are planned for future versions of the project.
+The following features are planned for future versions of the project, targeting May 2026 as part of the Huvalon internship capstone continuation.
 
 | Feature | Description |
 |---|---|
@@ -353,16 +352,7 @@ The following features are planned for future versions of the project.
 
 ---
 
-## AI Skills & Diagrams
-
-Skills extracted from this project are reusable by future AI agents. See [[docs/SESSION_CONTEXT]] for full session memory.
-
-| Skill | Description | File |
-|---|---|---|
-| Canara Bank Parser | Parses Canara Bank PDF statements — UPI/NEFT/ATM patterns, cross-page splits, business VPA tagging | [[docs/canara-bank-parser-skill/SKILL]] |
-| AI Bank Import | 5-pass categorisation waterfall (rules → keywords → Claude AI → manual review) with Claude prompt and UI architecture | [[docs/ai-import-skill/SKILL]] |
-
-### Architecture Diagrams
+## Architecture Diagrams
 
 | Diagram | Description |
 |---|---|
