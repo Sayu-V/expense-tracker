@@ -10,9 +10,9 @@ aliases:
   - Version History
 status: active
 related:
-  - "[[README]]"
-  - "[[Architecture]]"
-  - "[[docs/Tech_Stack]]"
+  - "[[NoneREADME]]"
+  - "[[None03_Architecture]]"
+  - "[[docs/04_Tech_Stack]]"
 ---
 
 # Changelog
@@ -22,7 +22,7 @@ related:
 > Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 > This project uses [Semantic Versioning](https://semver.org/).
 
-See also: [[README]] · [[Architecture]] · [[docs/Tech_Stack]] · [[docs/HLD]] · [[docs/LLD]]
+See also: [[NoneREADME]] · [[None03_Architecture]] · [[docs/04_Tech_Stack]] · [[docs/05_HLD]] · [[docs/06_LLD]]
 
 ---
 

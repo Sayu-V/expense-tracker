@@ -9,7 +9,7 @@
 ## Completed this session (all committed & pushed)
 
 ### Phase 1 — Documentation overhaul (all in Obsidian Flavored Markdown)
-All markdown files have YAML frontmatter, `[[wikilinks]]`, `> [!type]` callouts, `==highlights==`, Mermaid diagrams.
+All markdown files have YAML frontmatter, `[[Nonewikilinks]]`, `> [!type]` callouts, `==highlights==`, Mermaid diagrams.
 
 | File | Commit | Status |
 |------|--------|--------|

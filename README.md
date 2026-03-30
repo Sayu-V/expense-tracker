@@ -12,12 +12,12 @@ aliases:
 version: 2.3.0
 status: active
 related:
-  - "[[CHANGELOG]]"
-  - "[[docs/Architecture]]"
-  - "[[docs/Tech_Stack]]"
-  - "[[docs/HLD]]"
-  - "[[docs/LLD]]"
-  - "[[docs/Walkthrough]]"
+  - "[[NoneCHANGELOG]]"
+  - "[[docs/03_Architecture]]"
+  - "[[docs/04_Tech_Stack]]"
+  - "[[docs/05_HLD]]"
+  - "[[docs/06_LLD]]"
+  - "[[docs/10_Walkthrough]]"
 ---
 
 # 💰 Expense Tracker
@@ -27,7 +27,7 @@ related:
 **IBM Student Project | Yenepoya University | 2023–2026 Batch**
 **Current version: ==v2.3.0==** · Branch: `feature/v2.2.0`
 
-See also: [[CHANGELOG]] · [[docs/Architecture]] · [[docs/Tech_Stack]] · [[docs/Walkthrough]]
+See also: [[NoneCHANGELOG]] · [[docs/03_Architecture]] · [[docs/04_Tech_Stack]] · [[docs/10_Walkthrough]]
 
 ---
 
@@ -46,7 +46,7 @@ See also: [[CHANGELOG]] · [[docs/Architecture]] · [[docs/Tech_Stack]] · [[doc
 | Testing | pytest + httpx |
 
 > [!tip] Full stack details
-> See [[docs/Tech_Stack]] for detailed rationale behind every library choice.
+> See [[docs/04_Tech_Stack]] for detailed rationale behind every library choice.
 
 ---
 
@@ -124,7 +124,7 @@ docker compose up --build
 ```
 
 > [!warning] Windows users
-> Ensure WSL2 is enabled before running Docker Desktop. The repo includes a `.gitattributes` file to enforce LF line endings — this prevents `\r: command not found` errors inside containers. See [[docs/Architecture]] for deployment notes.
+> Ensure WSL2 is enabled before running Docker Desktop. The repo includes a `.gitattributes` file to enforce LF line endings — this prevents `\r: command not found` errors inside containers. See [[docs/03_Architecture]] for deployment notes.
 
 ---
 
@@ -302,7 +302,7 @@ ALLOWED_ORIGINS=http://localhost:5173
 | **v1.0.0** | Initial release — FastAPI + React + PostgreSQL + Docker |
 
 > [!note] Full changelog
-> See [[CHANGELOG]] for detailed per-version additions, changes, and bug fixes.
+> See [[NoneCHANGELOG]] for detailed per-version additions, changes, and bug fixes.
 
 ---
 

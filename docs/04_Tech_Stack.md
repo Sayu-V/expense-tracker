@@ -12,10 +12,10 @@ aliases:
 version: 2.3.0
 status: active
 related:
-  - "[[Architecture]]"
-  - "[[HLD]]"
-  - "[[LLD]]"
-  - "[[README]]"
+  - "[[None03_Architecture]]"
+  - "[[None05_HLD]]"
+  - "[[None06_LLD]]"
+  - "[[NoneREADME]]"
 ---
 
 # Tech Stack — Expense Tracker v2.3.0
@@ -23,10 +23,10 @@ related:
 > **Author:** Sayu-V | Yenepoya University
 > **Updated:** 2026-03-29
 
-See also: [[Architecture]] · [[HLD]] · [[LLD]] · [[README]]
+See also: [[None03_Architecture]] · [[None05_HLD]] · [[None06_LLD]] · [[NoneREADME]]
 
 > [!info] Version note
-> This document reflects the full v2.3.0 stack. For earlier versions see [[CHANGELOG]].
+> This document reflects the full v2.3.0 stack. For earlier versions see [[NoneCHANGELOG]].
 
 ---
 

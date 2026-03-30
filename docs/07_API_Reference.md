@@ -12,10 +12,10 @@ aliases:
   - API Docs
 status: active
 related:
-  - "[[docs/LLD]]"
-  - "[[docs/HLD]]"
-  - "[[README]]"
-  - "[[docs/Architecture]]"
+  - "[[docs/06_LLD]]"
+  - "[[docs/05_HLD]]"
+  - "[[NoneREADME]]"
+  - "[[docs/03_Architecture]]"
 ---
 
 # API Reference
@@ -25,7 +25,7 @@ related:
 > Running locally: `http://localhost:8000/api/v1`
 > Interactive docs (auto-generated): `http://localhost:8000/docs` (Swagger UI) · `http://localhost:8000/redoc`
 
-See also: [[docs/LLD]] · [[docs/HLD]] · [[README]] · [[docs/Architecture]]
+See also: [[docs/06_LLD]] · [[docs/05_HLD]] · [[NoneREADME]] · [[docs/03_Architecture]]
 
 ---
 
