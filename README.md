@@ -1,6 +1,6 @@
 ---
 title: Expense Tracker
-date: 2026-03-29
+date: 2026-03-30
 tags:
   - expense-tracker
   - project
@@ -336,6 +336,20 @@ ALLOWED_ORIGINS=http://localhost:5173
 | Day 5 | Tests, error handling, polish | ✅ |
 | Day 6 | End-to-end testing, Docker validation | ✅ |
 | Day 7 | v2.x features, documentation, deployment prep | ✅ |
+
+---
+
+## Planned Features (v3.x)
+
+The following features are planned for future versions of the project.
+
+| Feature | Description |
+|---|---|
+| **User Accounts & Auth** | Multi-user support with JWT-based authentication, per-user data isolation, and role management |
+| **Receipt Scan & OCR** | Attach photos or scans of bills and receipts to expenses; auto-extract amount, date, and merchant via OCR |
+| **Currency Selection** | Multi-currency support with live exchange rates; choose a display currency in Settings |
+| **Advanced Export** | Export to PDF reports, Excel spreadsheets, and custom date-range CSV with filters |
+| **Advanced AI Chat** | Pluggable LLM backend — choose Claude, Gemini, OpenAI, DeepSeek, or a local open-source model via a single API key setting |
 
 ---
 

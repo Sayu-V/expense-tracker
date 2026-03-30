@@ -40,3 +40,14 @@ htmlcov/
 
 # ── Logs ─────────────────────────────────────────────────
 *.log
+
+# ── Obsidian vault config (local tooling — stays on disk, not on GitHub) ─────
+# Plugin binaries alone are 2.8MB; workspace.json changes on every file open
+.obsidian/
+
+# ── Claude Code / Cowork project settings (local tooling) ────────────────────
+# Contains MCP server configs, session settings — never share publicly
+.claude/
+
+# ── Spin-off projects (live as sibling vaults, not inside this repo) ─────────
+_claude-agent-lab/
