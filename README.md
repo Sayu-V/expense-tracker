@@ -356,8 +356,8 @@ The following features are planned for future versions of the project, targeting
 
 | Diagram | Description |
 |---|---|
-| [[docs/architecture-v1.9.mermaid\|System Architecture (v1.9)]] | 3-tier Docker Compose network — Frontend / Backend / Database |
-| [[docs/v2.0-import-flow.mermaid\|Import Flow (v2.0)]] | Bank statement import pipeline end-to-end |
+| [[docs/architecture-v2.3.0.mermaid\|System Architecture (v2.3.0)]] | 3-tier Docker Compose network — 12 pages, 11 routers, 8 services, 8 DB tables |
+| [[docs/v2.3.0-import-flow.mermaid\|Import Flow (v2.3.0)]] | Bank import pipeline — Canara PDF parser, 2-pass auto-categorisation, duplicate detection |
 | [[docs/expense_tracker_architecture.svg\|Architecture SVG]] | Visual system overview |
 | [[docs/expense_request_flow.svg\|Request Flow SVG]] | HTTP request lifecycle diagram |
 

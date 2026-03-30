@@ -13,14 +13,13 @@ status: active
 related:
   - "[[README]]"
   - "[[CHANGELOG]]"
-  - "[[docs/SESSION_CONTEXT]]"
 ---
 
 # Expense Tracker — Vault Index
 
-> Central navigation node. Every document, skill, and diagram in this vault links through here.
+> Central navigation node. Every document and diagram in this vault links through here.
 
-See also: [[README]] · [[CHANGELOG]] · [[docs/SESSION_CONTEXT]]
+See also: [[README]] · [[CHANGELOG]]
 
 ---
 
@@ -30,7 +29,6 @@ See also: [[README]] · [[CHANGELOG]] · [[docs/SESSION_CONTEXT]]
 |---|---|
 | [[README]] | Full project overview, tech stack, quick start, API reference |
 | [[CHANGELOG]] | Version history v1.0.0 → v2.3.0 |
-| [[docs/SESSION_CONTEXT]] | AI session memory log — two sessions recorded |
 
 ---
 
@@ -57,33 +55,14 @@ See also: [[README]] · [[CHANGELOG]] · [[docs/SESSION_CONTEXT]]
 
 ---
 
-## AI Skills
-
-Skills extracted from this project and reusable by future AI agents. All follow the [[https://github.com/anthropics/skills|agentskills.io]] open standard (Anthropic's official format).
-
-| Skill | What it does |
-|---|---|
-| [[docs/canara-bank-parser-skill/SKILL\|Canara Bank Parser]] | Parses Canara Bank PDF statements — UPI/NEFT/ATM patterns, cross-page splits, business VPA merchant tagging |
-| [[docs/ai-import-skill/SKILL\|AI Bank Import]] | 5-pass categorisation waterfall (rules → keywords → Claude AI → manual review) + Claude system prompt |
-
----
-
 ## Architecture Diagrams
 
 | Diagram | Description |
 |---|---|
-| [[docs/architecture-v1.9.mermaid\|Architecture v1.9]] | 3-tier Docker Compose network — Frontend / Backend / Database |
-| [[docs/v2.0-import-flow.mermaid\|Import Flow v2.0]] | Bank statement import pipeline end-to-end |
+| [[docs/architecture-v2.3.0.mermaid\|Architecture v2.3.0]] | Full system — 12 pages, 11 routers, 8 services, 8 DB tables, version timeline v1.0→v2.3 |
+| [[docs/v2.3.0-import-flow.mermaid\|Import Flow v2.3.0]] | Canara Bank PDF parser, 2-pass auto-categorisation, duplicate detection |
 | [[docs/expense_tracker_architecture.svg\|Architecture SVG]] | Visual system overview |
 | [[docs/expense_request_flow.svg\|Request Flow SVG]] | HTTP request lifecycle through all layers |
-
----
-
-## Research & Strategy
-
-| File | Description |
-|---|---|
-| [[docs/RESEARCH_NOTES\|Research Notes]] | AI agent ecosystem research — 8 repos analysed, cost breakdown, recommended stack for skill building |
 
 ---
 
@@ -92,10 +71,8 @@ Skills extracted from this project and reusable by future AI agents. All follow 
 | Check | Status |
 |---|---|
 | Broken `[[NoneXXX]]` wikilinks | ✅ 0 remaining (fixed 2026-03-30) |
-| Skill nodes linked | ✅ Both skills linked from README + INDEX |
 | Diagram nodes linked | ✅ All 4 diagrams linked from README + INDEX |
 | Binary files (.docx, .pptx) | ⚠️ Not renderable in graph — by design |
-| SESSION_CONTEXT linked | ✅ |
 
 ---
 
