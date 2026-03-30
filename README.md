@@ -12,12 +12,16 @@ aliases:
 version: 2.3.0
 status: active
 related:
-  - "[[NoneCHANGELOG]]"
+  - "[[CHANGELOG]]"
   - "[[docs/03_Architecture]]"
   - "[[docs/04_Tech_Stack]]"
   - "[[docs/05_HLD]]"
   - "[[docs/06_LLD]]"
   - "[[docs/10_Walkthrough]]"
+  - "[[docs/12_Final_Report]]"
+  - "[[docs/canara-bank-parser-skill/SKILL]]"
+  - "[[docs/ai-import-skill/SKILL]]"
+  - "[[docs/SESSION_CONTEXT]]"
 ---
 
 # 💰 Expense Tracker
@@ -25,9 +29,9 @@ related:
 > Full-stack personal finance management system built with FastAPI, React, and PostgreSQL.
 
 **IBM Student Project | Yenepoya University | 2023–2026 Batch**
-**Current version: ==v2.3.0==** · Branch: `feature/v2.2.0`
+**Current version: ==v2.3.0==** · Branch: `feature/v2.3.0`
 
-See also: [[NoneCHANGELOG]] · [[docs/03_Architecture]] · [[docs/04_Tech_Stack]] · [[docs/10_Walkthrough]]
+See also: [[CHANGELOG]] · [[docs/03_Architecture]] · [[docs/04_Tech_Stack]] · [[docs/10_Walkthrough]] · [[docs/12_Final_Report]]
 
 ---
 
@@ -82,6 +86,10 @@ See also: [[NoneCHANGELOG]] · [[docs/03_Architecture]] · [[docs/04_Tech_Stack]
 - Import Rules engine — define IF/THEN rules with AND/OR logic, retroactive apply
 - Income Sources — define recurring senders matched by keyword during import
 - Duplicate detection and ⚠️ flagging for large unclassified deposits
+
+> [!tip] AI Skills for this feature
+> [[docs/canara-bank-parser-skill/SKILL|Canara Bank Parser Skill]] — full PDF parsing spec (UPI patterns, cross-page splits, business VPA tagging)
+> [[docs/ai-import-skill/SKILL|AI Bank Import Skill]] — 5-pass categorisation waterfall with Claude prompt and UI architecture
 
 ### Recurring Expenses
 - Recurring expense templates (daily / weekly / monthly)
@@ -199,13 +207,24 @@ expense-tracker/
 │   ├── index.html
 │   └── package.json
 ├── docs/
-│   ├── Architecture.md
-│   ├── Tech_Stack.md
-│   ├── HLD.md / HLD.docx
-│   ├── LLD.md / LLD.docx
-│   ├── PRD.docx
-│   ├── Walkthrough.md
-│   └── Tests.docx
+│   ├── 01_PRD.docx
+│   ├── 02_Project_Proposal.docx
+│   ├── 03_Architecture.md
+│   ├── 04_Tech_Stack.md
+│   ├── 05_HLD.md / 05_HLD.docx
+│   ├── 06_LLD.md / 06_LLD.docx
+│   ├── 07_API_Reference.md / 07_API_Reference.docx
+│   ├── 08_Deployment_Strategy.md / 08_Deployment_Strategy.docx
+│   ├── 09_Tests.docx
+│   ├── 10_Walkthrough.md
+│   ├── 11_ChangeLog.docx
+│   ├── 12_Final_Report.docx
+│   ├── 13_Presentation.pptx
+│   ├── canara-bank-parser-skill/SKILL.md  ← reusable AI parsing skill
+│   ├── ai-import-skill/SKILL.md           ← reusable AI categorisation skill
+│   ├── architecture-v1.9.mermaid          ← system architecture diagram source
+│   ├── v2.0-import-flow.mermaid           ← import pipeline diagram source
+│   └── SESSION_CONTEXT.md                 ← AI session memory log
 ├── .gitattributes                   # LF enforcement for Windows safety
 ├── docker-compose.yml
 ├── CHANGELOG.md
@@ -302,7 +321,7 @@ ALLOWED_ORIGINS=http://localhost:5173
 | **v1.0.0** | Initial release — FastAPI + React + PostgreSQL + Docker |
 
 > [!note] Full changelog
-> See [[NoneCHANGELOG]] for detailed per-version additions, changes, and bug fixes.
+> See [[CHANGELOG]] for detailed per-version additions, changes, and bug fixes.
 
 ---
 
@@ -317,3 +336,26 @@ ALLOWED_ORIGINS=http://localhost:5173
 | Day 5 | Tests, error handling, polish | ✅ |
 | Day 6 | End-to-end testing, Docker validation | ✅ |
 | Day 7 | v2.x features, documentation, deployment prep | ✅ |
+
+---
+
+## AI Skills & Diagrams
+
+Skills extracted from this project are reusable by future AI agents. See [[docs/SESSION_CONTEXT]] for full session memory.
+
+| Skill | Description | File |
+|---|---|---|
+| Canara Bank Parser | Parses Canara Bank PDF statements — UPI/NEFT/ATM patterns, cross-page splits, business VPA tagging | [[docs/canara-bank-parser-skill/SKILL]] |
+| AI Bank Import | 5-pass categorisation waterfall (rules → keywords → Claude AI → manual review) with Claude prompt and UI architecture | [[docs/ai-import-skill/SKILL]] |
+
+### Architecture Diagrams
+
+| Diagram | Description |
+|---|---|
+| [[docs/architecture-v1.9.mermaid\|System Architecture (v1.9)]] | 3-tier Docker Compose network — Frontend / Backend / Database |
+| [[docs/v2.0-import-flow.mermaid\|Import Flow (v2.0)]] | Bank statement import pipeline end-to-end |
+| [[docs/expense_tracker_architecture.svg\|Architecture SVG]] | Visual system overview |
+| [[docs/expense_request_flow.svg\|Request Flow SVG]] | HTTP request lifecycle diagram |
+
+> [!info] Project documentation
+> Full report: [[docs/12_Final_Report]] · Presentation: `docs/13_Presentation.pptx` · Architecture: [[docs/03_Architecture]] · Deployment: [[docs/08_Deployment_Strategy]]
