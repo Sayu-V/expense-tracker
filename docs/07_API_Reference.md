@@ -14,7 +14,7 @@ status: active
 related:
   - "[[docs/06_LLD]]"
   - "[[docs/05_HLD]]"
-  - "[[NoneREADME]]"
+  - "[[README]]"
   - "[[docs/03_Architecture]]"
 ---
 
@@ -25,7 +25,7 @@ related:
 > Running locally: `http://localhost:8000/api/v1`
 > Interactive docs (auto-generated): `http://localhost:8000/docs` (Swagger UI) · `http://localhost:8000/redoc`
 
-See also: [[docs/06_LLD]] · [[docs/05_HLD]] · [[NoneREADME]] · [[docs/03_Architecture]]
+See also: [[docs/06_LLD]] · [[docs/05_HLD]] · [[README]] · [[docs/03_Architecture]]
 
 ---
 

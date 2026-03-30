@@ -12,11 +12,11 @@ aliases:
 version: 2.3.0
 status: active
 related:
-  - "[[None04_Tech_Stack]]"
-  - "[[None05_HLD]]"
-  - "[[None06_LLD]]"
-  - "[[NoneREADME]]"
-  - "[[NoneCHANGELOG]]"
+  - "[[docs/04_Tech_Stack]]"
+  - "[[docs/05_HLD]]"
+  - "[[docs/06_LLD]]"
+  - "[[README]]"
+  - "[[CHANGELOG]]"
 ---
 
 # Architecture — Expense Tracker v2.3.0
@@ -24,7 +24,7 @@ related:
 > **Author:** Sayu-V | Yenepoya University
 > **Updated:** 2026-03-29
 
-See also: [[None04_Tech_Stack]] · [[None05_HLD]] · [[None06_LLD]] · [[NoneREADME]] · [[NoneCHANGELOG]]
+See also: [[docs/04_Tech_Stack]] · [[docs/05_HLD]] · [[docs/06_LLD]] · [[README]] · [[CHANGELOG]]
 
 ---
 
@@ -262,7 +262,7 @@ All secrets kept out of source code via `.env`:
 | `ALLOWED_ORIGINS` | backend | CORS allowed origins |
 
 > [!warning] Windows deployment
-> The `.gitattributes` file (`* text=auto eol=lf`) prevents CRLF line endings from being injected into Dockerfiles and shell scripts when cloning on Windows. Always clone after this file is committed. See [[None04_Tech_Stack]] for rationale.
+> The `.gitattributes` file (`* text=auto eol=lf`) prevents CRLF line endings from being injected into Dockerfiles and shell scripts when cloning on Windows. Always clone after this file is committed. See [[docs/04_Tech_Stack]] for rationale.
 
 ---
 

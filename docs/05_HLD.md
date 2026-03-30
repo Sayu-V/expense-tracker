@@ -12,10 +12,10 @@ aliases:
 version: 2.3.0
 status: active
 related:
-  - "[[None03_Architecture]]"
-  - "[[None06_LLD]]"
-  - "[[None04_Tech_Stack]]"
-  - "[[NoneREADME]]"
+  - "[[docs/03_Architecture]]"
+  - "[[docs/06_LLD]]"
+  - "[[docs/04_Tech_Stack]]"
+  - "[[README]]"
 ---
 
 # High-Level Design (HLD) — Expense Tracker v2.3.0
@@ -23,7 +23,7 @@ related:
 > **Author:** Sayu-V | Yenepoya University
 > **Updated:** 2026-03-29
 
-See also: [[None03_Architecture]] · [[None06_LLD]] · [[None04_Tech_Stack]] · [[NoneREADME]]
+See also: [[docs/03_Architecture]] · [[docs/06_LLD]] · [[docs/04_Tech_Stack]] · [[README]]
 
 ---
 
@@ -32,7 +32,7 @@ See also: [[None03_Architecture]] · [[None06_LLD]] · [[None04_Tech_Stack]] · 
 The Expense Tracker follows a classic **three-tier architecture** with clear separation between presentation, application logic, and data storage. All tiers are containerised and deployed via Docker Compose.
 
 > [!info] Detailed architecture
-> See [[None03_Architecture]] for the full request-flow diagram, import pipeline, and PWA architecture.
+> See [[docs/03_Architecture]] for the full request-flow diagram, import pipeline, and PWA architecture.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐

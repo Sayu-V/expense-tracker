@@ -13,10 +13,10 @@ aliases:
 version: 2.3.0
 status: active
 related:
-  - "[[NoneREADME]]"
-  - "[[None03_Architecture]]"
-  - "[[None05_HLD]]"
-  - "[[None06_LLD]]"
+  - "[[README]]"
+  - "[[docs/03_Architecture]]"
+  - "[[docs/05_HLD]]"
+  - "[[docs/06_LLD]]"
 ---
 
 # Application Walkthrough — Expense Tracker v2.3.0
@@ -24,7 +24,7 @@ related:
 > **Author:** Sayu-V | Yenepoya University
 > **Updated:** 2026-03-29
 
-See also: [[NoneREADME]] · [[None03_Architecture]] · [[None05_HLD]] · [[None06_LLD]]
+See also: [[README]] · [[docs/03_Architecture]] · [[docs/05_HLD]] · [[docs/06_LLD]]
 
 This guide walks through every feature of the Expense Tracker application from a user's perspective. All features described here are live in ==v2.3.0==.
 

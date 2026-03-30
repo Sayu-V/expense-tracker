@@ -12,10 +12,10 @@ aliases:
 version: 2.3.0
 status: active
 related:
-  - "[[None03_Architecture]]"
-  - "[[None05_HLD]]"
-  - "[[None04_Tech_Stack]]"
-  - "[[NoneREADME]]"
+  - "[[docs/03_Architecture]]"
+  - "[[docs/05_HLD]]"
+  - "[[docs/04_Tech_Stack]]"
+  - "[[README]]"
 ---
 
 # Low-Level Design (LLD) — Expense Tracker v2.3.0
@@ -23,7 +23,7 @@ related:
 > **Author:** Sayu-V | Yenepoya University
 > **Updated:** 2026-03-29
 
-See also: [[None03_Architecture]] · [[None05_HLD]] · [[None04_Tech_Stack]] · [[NoneREADME]]
+See also: [[docs/03_Architecture]] · [[docs/05_HLD]] · [[docs/04_Tech_Stack]] · [[README]]
 
 ---
 

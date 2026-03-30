@@ -1,69 +1,62 @@
 # Session Context — Expense Tracker Project
-**Saved:** 2026-03-29
+
+**Last updated:** 2026-03-30
 **Current branch:** `feature/v2.3.0`
-**Remote:** `origin/feature/v2.3.0` ← fully in sync (up to date)
 **Current version:** v2.3.0
+
+See also: [[README]] · [[CHANGELOG]] · [[docs/12_Final_Report]]
 
 ---
 
-## Completed this session (all committed & pushed)
+## Session 2026-03-30 — Documentation, PPTX, Obsidian Memory Setup
+
+### Work completed
+
+| Task | Commit | Status |
+|------|--------|--------|
+| `docs/12_Final_Report.docx` | `d39f194` | ✅ 14-section comprehensive project report |
+| Numeric ordering of all docs (`01_PRD` → `12_Final_Report`) | `75f2afc` | ✅ All `git mv`, all wikilinks updated |
+| `docs/13_Presentation.pptx` | `9122d7c` | ✅ 12-slide minimal-design deck, full QA |
+| `README.md` wikilinks + Skills & Diagrams section | `7f1ff06` | ✅ All orphans linked, broken links fixed |
+| Fix 36 broken `[[NoneXXX]]` wikilinks across 8 files | (commit below) | ✅ 0 broken links remain |
+
+### Obsidian graph — current link state
+All `.md` files now have working wikilinks. Zero `[[NoneXXX]]` broken links remain. Skills and diagrams are no longer orphan nodes — README's "AI Skills & Diagrams" section links to all of them.
+
+### Push needed
+```bash
+cd ~/Documents/ObsidianVaults/expense-tracker
+git push origin feature/v2.3.0
+```
+
+---
+
+## Session 2026-03-29 — Core documentation overhaul + v2.3.0 finalisation
 
 ### Phase 1 — Documentation overhaul (all in Obsidian Flavored Markdown)
-All markdown files have YAML frontmatter, `[[Nonewikilinks]]`, `> [!type]` callouts, `==highlights==`, Mermaid diagrams.
+All markdown files have YAML frontmatter, `[[wikilinks]]`, `> [!type]` callouts, `==highlights==`, Mermaid diagrams.
 
 | File | Commit | Status |
 |------|--------|--------|
 | `CHANGELOG.md` | `1f26f83` | ✅ v2.2.0 full + v2.3.0 entries |
 | `README.md` | `094d189` | ✅ Full rewrite, v2.3.0 |
-| `docs/Tech_Stack.md` | `284adf8` | ✅ 11 routers, 8 services |
-| `docs/Architecture.md` | `2a9a718` | ✅ 8 tables, Mermaid, PWA |
-| `docs/HLD.md` | `f3a8a3b` | ✅ Settings hub, all design decisions |
-| `docs/HLD.docx` | `e189aa0` | ✅ Professional Word format |
-| `docs/LLD.md` | `e105d07` | ✅ 8 DB tables, full API contract |
-| `docs/LLD.docx` | `a5441cc` | ✅ Professional Word format |
-| `docs/PRD.docx` | `d7f94e0` | ✅ All features marked ✅ Completed |
-| `docs/Tests.docx` | `4c9db72` | ✅ 12 tests + coverage gap analysis |
-| `docs/Walkthrough.md` | `a351947` | ✅ All 8 pages, 3 themes, Settings hub |
+| `docs/04_Tech_Stack.md` | `284adf8` | ✅ 11 routers, 8 services |
+| `docs/03_Architecture.md` | `2a9a718` | ✅ 8 tables, Mermaid, PWA |
+| `docs/05_HLD.md` | `f3a8a3b` | ✅ Settings hub, all design decisions |
+| `docs/05_HLD.docx` | `e189aa0` | ✅ Professional Word format |
+| `docs/06_LLD.md` | `e105d07` | ✅ 8 DB tables, full API contract |
+| `docs/06_LLD.docx` | `a5441cc` | ✅ Professional Word format |
+| `docs/01_PRD.docx` | `d7f94e0` | ✅ All features marked ✅ Completed |
+| `docs/09_Tests.docx` | `4c9db72` | ✅ 12 tests + coverage gap analysis |
+| `docs/10_Walkthrough.md` | `a351947` | ✅ All 8 pages, 3 themes, Settings hub |
 | `.gitattributes` | `010a8ac` | ✅ `* text=auto eol=lf` |
 
 ### Phase 2 — Version string bumps
-| Location | Was | Now | Commit |
-|----------|-----|-----|--------|
-| `SplashScreen.jsx` header + visible badge | `v2.2.0` | `v2.3.0` | `2cc46b3` |
-| `public/sw.js` cache names | `et-shell/data-v2.2.0` | `v2.3.0` | `2cc46b3` |
-| `frontend/package.json` | `1.0.0` | `2.3.0` | `2cc46b3` |
-| `backend/app/main.py` FastAPI version | `2.1.0` | `2.3.0` | `2cc46b3` |
-| `backend/app/main.py` `/health` endpoint | `2.0.0` | `2.3.0` | `2cc46b3` |
-| `FeatureUpdates.jsx` VERSION_LOG + tag | `v2.2` | `v2.3.0` entry added | `2cc46b3` |
+All version references bumped to v2.3.0. Commit: `2cc46b3`
 
 ### Phase 3 — Privacy fix: canara-bank-parser-skill
-**File:** `docs/canara-bank-parser-skill/SKILL.md`
-**Commit:** `e719092`
-**Status:** ✅ FULLY SANITISED — zero personal data remaining
-
-All personal/private data replaced with generic fictional placeholders:
-
-| Was (personal) | Now (generic) |
-|----------------|---------------|
-| Real UPI ref numbers (`509255803118`, `509656275661`) | `100000000001`, `100000000002` |
-| Real person name `LAXMI S A` | `RAHUL SHARMA` |
-| Real VPA `LAXMI@OKSBI` | `rsharm@oksbi` |
-| `MARKREX13` specific business VPA | `BIZPAY99` generic business handle |
-| `X13-1@OKICICI` specific VPA | `BIZPAY99@OKBANK` |
-| Specific merchant tags (`CABLEGOO`, `MALBARB`, `PAINTAIN`, `BUCHER`, `KIRANA`) | Generic tags (`GROCERY`, `FUEL`, `JEWEL`, `TEXTILE`, `MEDICAL`) |
-| `BEETECH ENTERPRISES` (real NEFT payee) | `ACME ENTERPRISES` |
-| `SHREE KALIKAMBA VINAYAKA` (real CHQ payee) | `PAYEE NAME` |
-| `VENKAPPA` (real person name) | `PERSON NAME` |
-| `CANARABANKMANGA` (location-specific ATM code) | `CANARABANK0001` |
-| "19-page personal savings (207 transactions)" | "~20 pages / ~200 txns" |
-| "86-page business account (905 transactions)" | "~90 pages / ~900 txns" |
-| Description mentions MARKREX as specific business | Rewritten as generic "Business VPA pattern" |
-
-Verification command confirms zero personal data remains:
-```bash
-grep -n "LAXMI\|MARKREX\|509255\|509656\|BEETECH\|KALIKAMBA\|VENKAPPA\|MANGA\|207 trans\|905 trans\|19-page\|86-page\|CABLEGOO\|MALBARB\|PAINTAIN\|BUCHER" docs/canara-bank-parser-skill/SKILL.md
-# Output: CLEAN - none found
-```
+**File:** `docs/canara-bank-parser-skill/SKILL.md` · **Commit:** `e719092`
+All personal/private data replaced with generic fictional placeholders. Zero personal data remains.
 
 ---
 
@@ -71,18 +64,20 @@ grep -n "LAXMI\|MARKREX\|509255\|509656\|BEETECH\|KALIKAMBA\|VENKAPPA\|MANGA\|20
 
 ```
 Branch:   feature/v2.3.0
-Remote:   origin/feature/v2.3.0  ← UP TO DATE (fully pushed)
+Remote:   origin/feature/v2.3.0  ← behind by 5+ commits (need push)
 
-Latest commits:
-  1631011  chore(obsidian): update vault state after skill edit
-  e719092  docs(skill): sanitise canara-bank-parser — personal data removed
-  0ba62c1  chore(obsidian): update vault UI state after v2.3.0 doc edits
-  2cc46b3  chore(version): bump all strings to v2.3.0
-  010a8ac  chore: add .gitattributes
-  a351947  docs(walkthrough): Obsidian format + v2.3.0
+Recent commits (unpushed after last push at e719092):
+  [today]   fix: repair 36 broken [[NoneXXX]] wikilinks + update SESSION_CONTEXT
+  7f1ff06   docs(readme): fix wikilinks + add Skills & Diagrams section
+  9122d7c   docs: add Expense Tracker presentation deck (13_Presentation.pptx)
+  75f2afc   chore(docs): add ordered numbering system to all docs (01–12)
+  d39f194   docs: add Final_Report.docx — comprehensive v2.3.0 project report
+
+Already pushed:
+  1631011   chore(obsidian): update vault state after skill edit
+  e719092   docs(skill): sanitise canara-bank-parser — personal data removed
+  2cc46b3   chore(version): bump all strings to v2.3.0
 ```
-
-**Working tree:** Clean (only pre-existing untracked `docs/import-rules-mockup.jsx` — intentionally not committed)
 
 ---
 
@@ -94,10 +89,30 @@ feature/v1.1.0  ✅ pushed  ← income tracking, emojis, AI categorise
 feature/v1.8.0  ✅ pushed  ← YoY charts, predictions, insights
 feature/v2.0.0  ✅ pushed  ← bank import, income sources
 feature/v2.2.0  ✅ pushed  ← PWA, galaxy theme, 3D splash, buttons
-feature/v2.3.0  ✅ pushed  ← Settings hub, docs overhaul, version bumps, privacy fix
+feature/v2.3.0  ✅ local   ← Settings hub, docs overhaul, PPTX, obsidian memory
 ```
 
-**Next step when ready:** Open PR on GitHub → `feature/v2.3.0` into `main`
+**Next step:** `git push origin feature/v2.3.0` then open PR into `main`.
+
+---
+
+## Skills created in this project
+
+| Skill | Location | Status |
+|-------|----------|--------|
+| `canara-bank-parser` | [[docs/canara-bank-parser-skill/SKILL]] | ✅ Production-ready, sanitised |
+| `ai-bank-import` | [[docs/ai-import-skill/SKILL]] | ✅ 5-pass waterfall + Claude prompt |
+
+**To install globally on Mac:**
+```bash
+mkdir -p ~/.claude/skills/canara-bank-parser
+cp ~/Documents/ObsidianVaults/expense-tracker/docs/canara-bank-parser-skill/SKILL.md \
+   ~/.claude/skills/canara-bank-parser/SKILL.md
+
+mkdir -p ~/.claude/skills/ai-bank-import
+cp ~/Documents/ObsidianVaults/expense-tracker/docs/ai-import-skill/SKILL.md \
+   ~/.claude/skills/ai-bank-import/SKILL.md
+```
 
 ---
 

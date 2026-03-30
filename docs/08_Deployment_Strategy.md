@@ -13,7 +13,7 @@ aliases:
   - Installation
 status: active
 related:
-  - "[[NoneREADME]]"
+  - "[[README]]"
   - "[[docs/03_Architecture]]"
   - "[[docs/04_Tech_Stack]]"
   - "[[docs/07_API_Reference]]"
@@ -24,7 +24,7 @@ related:
 > [!info] One-Command Deploy
 > The full stack — PostgreSQL 15, FastAPI backend, and React frontend — starts with a single `docker compose up --build`. No cloud accounts, no subscriptions, no external APIs required.
 
-See also: [[NoneREADME]] · [[docs/03_Architecture]] · [[docs/04_Tech_Stack]] · [[docs/07_API_Reference]]
+See also: [[README]] · [[docs/03_Architecture]] · [[docs/04_Tech_Stack]] · [[docs/07_API_Reference]]
 
 ---
 
